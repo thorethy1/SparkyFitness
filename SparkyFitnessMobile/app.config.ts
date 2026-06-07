@@ -140,7 +140,6 @@ export default ({ config }: ConfigContext): Partial<ExpoConfig> => {
     plugins: [
       ...(config.plugins ?? []),
       './plugins/withGlanceAndroidSupport',
-      ...(process.env.EXPO_DISABLE_IOS_WIDGET ? [] : ['./plugins/withCalorieWidget']),
       ...(!isDev ? prodPlugins : []),
     ],
     extra: {
