@@ -437,7 +437,7 @@ interface NormalizedFood {
   provider_external_id?: string;
   provider_type?: string;
   is_custom: boolean;
-  is_verified?: boolean;
+  provider_verified?: boolean;
   default_variant: NormalizedFoodVariant;
   variants?: NormalizedFoodVariant[];
 }
@@ -450,7 +450,7 @@ export interface BarcodeFood {
   provider_external_id?: string | null;
   provider_type?: string;
   is_custom: boolean;
-  is_verified?: boolean;
+  provider_verified?: boolean;
   default_variant: NormalizedFoodVariant;
   variants?: NormalizedFoodVariant[];
 }
@@ -498,7 +498,7 @@ export function transformNormalizedFood(food: NormalizedFood, providerType: stri
     ...mapVariant(dv),
     source: food.provider_type ?? providerType,
     variants: variants && variants.length > 0 ? variants : undefined,
-    is_verified: food.is_verified === true,
+    provider_verified: food.provider_verified === true,
   };
 }
 
@@ -573,7 +573,7 @@ export async function lookupBarcodeV2(barcode: string): Promise<BarcodeLookupRes
     provider_external_id: food.provider_external_id,
     provider_type: food.provider_type,
     is_custom: food.is_custom,
-    is_verified: food.is_verified,
+    provider_verified: food.provider_verified,
     default_variant: food.default_variant,
     variants: food.variants,
   };

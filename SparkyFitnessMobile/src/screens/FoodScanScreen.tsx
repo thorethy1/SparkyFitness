@@ -173,7 +173,7 @@ const FoodScanScreen: React.FC<FoodScanScreenProps> = ({ navigation, route }) =>
           vitaminC: defaultVariant.vitamin_c,
           variantId: defaultVariant.id,
           source: 'local',
-          is_verified: result.food.is_verified,
+          provider_verified: result.food.provider_verified,
           externalVariants: result.food.variants?.map((v) => ({
             serving_size: v.serving_size,
             serving_unit: v.serving_unit,

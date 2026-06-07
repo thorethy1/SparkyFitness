@@ -654,7 +654,7 @@ const FoodSearchScreen: React.FC<FoodSearchScreenProps> = ({ navigation, route }
         <View className="flex-1 mr-3">
           <View className="flex-row items-center gap-1">
             <Text className="text-text-primary text-base font-medium">{item.name}</Text>
-            {item.is_verified ? (
+            {item.provider_verified ? (
               <Icon name="checkmark-circle" size={16} color={formEnabled} />
             ) : null}
           </View>

@@ -131,7 +131,7 @@ export interface FoodInfoItem {
   customNutrients?: Record<string, string | number> | null;
   variantId?: string;
   externalVariants?: ExternalFoodVariant[];
-  is_verified?: boolean;
+  provider_verified?: boolean;
   // Yield count for meal-source items — surfaces "meal makes N servings"
   // context in the diary-add screen for serving-unit meals where the
   // per-serving size suffix is suppressed.
@@ -198,7 +198,7 @@ export const externalFoodItemToFoodInfo = (item: ExternalFoodItem): FoodInfoItem
   vitaminA: item.vitamin_a,
   vitaminC: item.vitamin_c,
   externalVariants: item.variants,
-  is_verified: item.is_verified,
+  provider_verified: item.provider_verified,
   source: 'external',
   originalItem: item,
 });

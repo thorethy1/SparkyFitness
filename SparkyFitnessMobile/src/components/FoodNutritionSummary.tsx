@@ -16,7 +16,7 @@ interface FoodNutritionSummaryProps {
   goalPercentages?: NutritionGoalPercentages;
   goalsLoading?: boolean;
   showNetCarbs?: boolean;
-  is_verified?: boolean;
+  provider_verified?: boolean;
 }
 
 const FoodNutritionSummary: React.FC<FoodNutritionSummaryProps> = ({
@@ -27,7 +27,7 @@ const FoodNutritionSummary: React.FC<FoodNutritionSummaryProps> = ({
   goalPercentages,
   goalsLoading,
   showNetCarbs = false,
-  is_verified = false,
+  provider_verified = false,
 }) => {
   const accentColor = useCSSVariable('--color-accent-primary') as string;
   const verifiedColor = String(useCSSVariable('--color-success')) || '#4CAF50';
@@ -67,7 +67,7 @@ const FoodNutritionSummary: React.FC<FoodNutritionSummaryProps> = ({
       <View>
         <View className="flex-row items-center gap-1">
           <Text className="text-text-primary text-3xl font-bold">{name}</Text>
-          {is_verified ? (
+          {provider_verified ? (
             <Icon name="checkmark-circle" size={20} color={verifiedColor} />
           ) : null}
         </View>
