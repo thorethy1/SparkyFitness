@@ -468,6 +468,7 @@ interface NormalizedFood {
   provider_external_id?: string;
   provider_type?: string;
   is_custom: boolean;
+  is_verified?: boolean;
   default_variant: NormalizedFoodVariant;
   variants?: NormalizedFoodVariant[];
 }
@@ -510,6 +511,7 @@ export function transformNormalizedFood(food: NormalizedFood, providerType: stri
     ...mapVariant(dv),
     source: food.provider_type ?? providerType,
     variants: variants && variants.length > 0 ? variants : undefined,
+    is_verified: food.is_verified === true,
   };
 }
 

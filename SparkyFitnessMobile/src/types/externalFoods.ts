@@ -54,4 +54,6 @@ export interface ExternalFoodItem {
   serving_unit: string;
   source: string;
   variants?: ExternalFoodVariant[];
+  /** Whether the food is verified by the provider (e.g. Yazio verified foods) */
+  is_verified?: boolean;
 }

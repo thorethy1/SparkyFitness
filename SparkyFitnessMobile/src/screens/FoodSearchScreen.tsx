@@ -57,11 +57,12 @@ const FoodSearchScreen: React.FC<FoodSearchScreenProps> = ({ navigation, route }
   const pickerMode = route.params?.pickerMode ?? 'log-entry';
   const isMealBuilderMode = pickerMode === 'meal-builder';
   const insets = useSafeAreaInsets();
-  const [accentColor, textMuted, textSecondary] = useCSSVariable([
+  const [accentColor, textMuted, textSecondary, formEnabled] = useCSSVariable([
     '--color-accent-primary',
     '--color-text-muted',
     '--color-text-secondary',
-  ]) as [string, string, string];
+    '--color-form-enabled',
+  ]) as [string, string, string, string];
   const { isConnected } = useServerConnection();
   const { preferences } = usePreferences({ enabled: isConnected });
   const { recentFoods, topFoods, isLoading, isError, refetch } = useFoods({ enabled: isConnected });
@@ -209,10 +210,10 @@ const FoodSearchScreen: React.FC<FoodSearchScreenProps> = ({ navigation, route }
   };
 
   const handleExternalFoodTap = async (item: ExternalFoodItem) => {
-    if (item.source === 'fatsecret' && selectedProvider) {
+    if ((item.source === 'fatsecret' || item.source === 'yazio') && selectedProvider) {
       setLoadingFoodId(item.id);
       try {
-        const detailed = await fetchExternalFoodDetails('fatsecret', item.id, selectedProvider);
+        const detailed = await fetchExternalFoodDetails(item.source, item.id, selectedProvider);
         showFoodInfo(externalFoodItemToFoodInfo(detailed));
       } catch (error) {
         const message = getApiErrorMessage(error) ?? "Couldn't load full nutrition details.";
@@ -651,7 +652,12 @@ const FoodSearchScreen: React.FC<FoodSearchScreenProps> = ({ navigation, route }
     >
       <View className="flex-row justify-between items-center">
         <View className="flex-1 mr-3">
-          <Text className="text-text-primary text-base font-medium">{item.name}</Text>
+          <View className="flex-row items-center gap-1">
+            <Text className="text-text-primary text-base font-medium">{item.name}</Text>
+            {item.is_verified ? (
+              <Icon name="checkmark-circle" size={16} color={formEnabled} />
+            ) : null}
+          </View>
           {item.brand ? (
             <Text className="text-text-secondary text-sm mt-0.5">{item.brand}</Text>
           ) : null}
