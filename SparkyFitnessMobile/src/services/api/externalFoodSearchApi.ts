@@ -442,6 +442,24 @@ interface NormalizedFood {
   variants?: NormalizedFoodVariant[];
 }
 
+export interface BarcodeFood {
+  id?: string;
+  name: string;
+  brand: string | null;
+  barcode?: string;
+  provider_external_id?: string | null;
+  provider_type?: string;
+  is_custom: boolean;
+  is_verified?: boolean;
+  default_variant: NormalizedFoodVariant;
+  variants?: NormalizedFoodVariant[];
+}
+
+export type BarcodeLookupResult =
+  | { source: 'local'; food: BarcodeFood & { id: string } }
+  | { source: string; food: BarcodeFood }
+  | { source: 'not_found'; food: null };
+
 export function transformNormalizedFood(food: NormalizedFood, providerType: string): ExternalFoodItem {
   const dv = food.default_variant;
 
