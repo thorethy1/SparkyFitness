@@ -407,6 +407,7 @@ interface NormalizedFoodVariant {
   id?: string;
   serving_size: number;
   serving_unit: string;
+  serving_description?: string;
   calories: number;
   protein: number;
   carbs: number;
@@ -466,7 +467,7 @@ export function transformNormalizedFood(food: NormalizedFood, providerType: stri
   const mapVariant = (v: NormalizedFoodVariant): ExternalFoodVariant => ({
     serving_size: v.serving_size,
     serving_unit: v.serving_unit,
-    serving_description: `${v.serving_size} ${v.serving_unit}`,
+    serving_description: v.serving_description ?? `${v.serving_size} ${v.serving_unit}`,
     calories: v.calories,
     protein: v.protein,
     carbs: v.carbs,

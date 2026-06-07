@@ -252,27 +252,32 @@ export function buildLocalVariantOptions(
 export function buildExternalVariantOptions(
   variants?: ExternalFoodVariant[],
 ): FoodVariantOptionData[] {
-  return (variants ?? []).map((variant, index) => ({
-    id: `ext-${index}`,
-    label: `${variant.serving_description} (${variant.calories} cal)`,
-    servingSize: variant.serving_size,
-    servingUnit: variant.serving_unit,
-    calories: variant.calories,
-    protein: variant.protein,
-    carbs: variant.carbs,
-    fat: variant.fat,
-    fiber: variant.fiber,
-    saturatedFat: variant.saturated_fat,
-    sodium: variant.sodium,
-    sugars: variant.sugars,
-    transFat: variant.trans_fat,
-    potassium: variant.potassium,
-    calcium: variant.calcium,
-    iron: variant.iron,
-    cholesterol: variant.cholesterol,
-    vitaminA: variant.vitamin_a,
-    vitaminC: variant.vitamin_c,
-  }));
+  return (variants ?? []).map((variant, index) => {
+    const desc = variant.serving_description || '';
+    const cleanDesc = desc.split('.')[0];
+    const formatted = cleanDesc.charAt(0).toUpperCase() + cleanDesc.slice(1);
+    return {
+      id: `ext-${index}`,
+      label: `${formatted} (${variant.calories} cal)`,
+      servingSize: variant.serving_size,
+      servingUnit: variant.serving_unit,
+      calories: variant.calories,
+      protein: variant.protein,
+      carbs: variant.carbs,
+      fat: variant.fat,
+      fiber: variant.fiber,
+      saturatedFat: variant.saturated_fat,
+      sodium: variant.sodium,
+      sugars: variant.sugars,
+      transFat: variant.trans_fat,
+      potassium: variant.potassium,
+      calcium: variant.calcium,
+      iron: variant.iron,
+      cholesterol: variant.cholesterol,
+      vitaminA: variant.vitamin_a,
+      vitaminC: variant.vitamin_c,
+    };
+  });
 }
 
 export function buildLocalUnitVariants(

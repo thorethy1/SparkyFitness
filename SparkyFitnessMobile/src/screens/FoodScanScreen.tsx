@@ -177,7 +177,7 @@ const FoodScanScreen: React.FC<FoodScanScreenProps> = ({ navigation, route }) =>
           externalVariants: result.food.variants?.map((v) => ({
             serving_size: v.serving_size,
             serving_unit: v.serving_unit,
-            serving_description: `${v.serving_size} ${v.serving_unit}`,
+            serving_description: v.serving_description ?? `${v.serving_size} ${v.serving_unit}`,
             calories: v.calories,
             protein: v.protein,
             carbs: v.carbs,

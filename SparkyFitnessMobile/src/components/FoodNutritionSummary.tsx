@@ -68,7 +68,10 @@ const FoodNutritionSummary: React.FC<FoodNutritionSummaryProps> = ({
         <View className="flex-row items-center gap-1">
           <Text className="text-text-primary text-3xl font-bold">{name}</Text>
           {provider_verified ? (
-            <Icon name="checkmark-circle" size={20} color={verifiedColor} />
+            <View className="flex-row items-center bg-emerald-100 dark:bg-emerald-900/40 rounded-md px-2 py-0.5 ml-1">
+              <Icon name="checkmark-circle" size={14} color={verifiedColor} />
+              <Text className="text-emerald-700 dark:text-emerald-300 text-xs font-semibold ml-1">Verified</Text>
+            </View>
           ) : null}
         </View>
         {brand ? (
