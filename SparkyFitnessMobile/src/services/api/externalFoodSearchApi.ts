@@ -50,42 +50,9 @@ export function transformOpenFoodFactsProduct(product: OpenFoodFactsProduct): Ex
   };
 }
 
-export interface BarcodeFood {
-  id?: string;
-  name: string;
-  brand: string | null;
-  barcode?: string;
-  provider_external_id?: string | null;
-  provider_type?: string;
-  is_custom: boolean;
-  is_verified?: boolean;
-  default_variant: {
-    id?: string;
-    serving_size: number;
-    serving_unit: string;
-    calories: number;
-    protein: number;
-    carbs: number;
-    fat: number;
-    saturated_fat?: number;
-    sodium?: number;
-    dietary_fiber?: number;
-    sugars?: number;
-    trans_fat?: number;
-    cholesterol?: number;
-    potassium?: number;
-    calcium?: number;
-    iron?: number;
-    vitamin_a?: number;
-    vitamin_c?: number;
-  };
-  variants?: NormalizedFoodVariant[];
-}
-
-export type BarcodeLookupResult =
-  | { source: 'local'; food: BarcodeFood & { id: string } }
-  | { source: string; food: BarcodeFood }
-  | { source: 'not_found'; food: null };
+// BarcodeFood, BarcodeLookupResult, and lookupBarcodeV2 are defined after
+// NormalizedFood / NormalizedFoodVariant below (line ~520) since they reference
+// those types. Forward-declare the legacy lookup function here.
 
 export async function lookupBarcode(barcode: string): Promise<BarcodeLookupResult> {
   return apiFetch<BarcodeLookupResult>({

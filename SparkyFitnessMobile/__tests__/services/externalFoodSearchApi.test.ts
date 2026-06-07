@@ -1347,6 +1347,7 @@ describe('externalFoodSearchApi', () => {
           calcium: 5,
           iron: 0.4,
           vitamin_a: 2,
+          is_verified: false,
           vitamin_c: 0,
           serving_size: 30,
           serving_unit: 'g',
