@@ -145,13 +145,13 @@ const FoodScanScreen: React.FC<FoodScanScreenProps> = ({ navigation, route }) =>
 
       if (!result.food) {
         setNotFoundBarcode(barcode);
-      } else if (result.food.id) {
+      } else if (result.source === 'local') {
         if (shouldFireSuccessHaptic) {
           fireSuccessHaptic();
         }
         const defaultVariant = result.food.default_variant;
         const item: FoodInfoItem = {
-          id: result.food.id,
+          id: result.food.id!,
           name: result.food.name,
           brand: result.food.brand,
           servingSize: defaultVariant.serving_size,
@@ -173,6 +173,43 @@ const FoodScanScreen: React.FC<FoodScanScreenProps> = ({ navigation, route }) =>
           vitaminC: defaultVariant.vitamin_c,
           variantId: defaultVariant.id,
           source: 'local',
+          provider_verified: result.food.provider_verified,
+          originalItem: result.food,
+        };
+        navigation.replace('FoodEntryAdd', {
+          item,
+          date,
+          pickerMode: isMealBuilderMode ? 'meal-builder' : undefined,
+          returnDepth,
+        });
+      } else {
+        if (shouldFireSuccessHaptic) {
+          fireSuccessHaptic();
+        }
+        const defaultVariant = result.food.default_variant;
+        const item: FoodInfoItem = {
+          id: result.food.provider_external_id ?? result.food.id ?? '',
+          name: result.food.name,
+          brand: result.food.brand,
+          servingSize: defaultVariant.serving_size,
+          servingUnit: defaultVariant.serving_unit,
+          calories: defaultVariant.calories,
+          protein: defaultVariant.protein,
+          carbs: defaultVariant.carbs,
+          fat: defaultVariant.fat,
+          fiber: defaultVariant.dietary_fiber,
+          saturatedFat: defaultVariant.saturated_fat,
+          sodium: defaultVariant.sodium,
+          sugars: defaultVariant.sugars,
+          transFat: defaultVariant.trans_fat,
+          potassium: defaultVariant.potassium,
+          calcium: defaultVariant.calcium,
+          iron: defaultVariant.iron,
+          cholesterol: defaultVariant.cholesterol,
+          vitaminA: defaultVariant.vitamin_a,
+          vitaminC: defaultVariant.vitamin_c,
+          variantId: defaultVariant.id,
+          source: 'external',
           provider_verified: result.food.provider_verified,
           externalVariants: result.food.variants?.map((v) => ({
             serving_size: v.serving_size,
@@ -202,39 +239,6 @@ const FoodScanScreen: React.FC<FoodScanScreenProps> = ({ navigation, route }) =>
           pickerMode: isMealBuilderMode ? 'meal-builder' : undefined,
           returnDepth,
         });
-      } else {
-        if (shouldFireSuccessHaptic) {
-          fireSuccessHaptic();
-        }
-        const defaultVariant = result.food.default_variant;
-        navigation.replace(
-          'FoodForm',
-          buildFoodFormParams({
-            barcode,
-            providerType: result.source,
-            initialFood: {
-              name: result.food.name,
-              brand: result.food.brand ?? '',
-              servingSize: String(defaultVariant.serving_size),
-              servingUnit: defaultVariant.serving_unit,
-              calories: String(defaultVariant.calories),
-              protein: String(defaultVariant.protein),
-              carbs: String(defaultVariant.carbs),
-              fat: String(defaultVariant.fat),
-              fiber: toFormString(defaultVariant.dietary_fiber),
-              saturatedFat: toFormString(defaultVariant.saturated_fat),
-              sodium: toFormString(defaultVariant.sodium),
-              sugars: toFormString(defaultVariant.sugars),
-              transFat: toFormString(defaultVariant.trans_fat),
-              potassium: toFormString(defaultVariant.potassium),
-              cholesterol: toFormString(defaultVariant.cholesterol),
-              calcium: toFormString(defaultVariant.calcium),
-              iron: toFormString(defaultVariant.iron),
-              vitaminA: toFormString(defaultVariant.vitamin_a),
-              vitaminC: toFormString(defaultVariant.vitamin_c),
-            },
-          }),
-        );
       }
     } catch (error) {
       const message =

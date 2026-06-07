@@ -566,6 +566,10 @@ export async function lookupBarcodeV2(barcode: string): Promise<BarcodeLookupRes
   }
 
   const food = response.food;
+  const resolvedVariants =
+    food.variants && food.variants.length > 0
+      ? food.variants
+      : [food.default_variant];
   const barcodeFood: BarcodeFood = {
     id: food.id,
     name: food.name,
@@ -576,7 +580,7 @@ export async function lookupBarcodeV2(barcode: string): Promise<BarcodeLookupRes
     is_custom: food.is_custom,
     provider_verified: food.provider_verified,
     default_variant: food.default_variant,
-    variants: food.variants,
+    variants: resolvedVariants,
   };
 
   if (response.source === 'local') {

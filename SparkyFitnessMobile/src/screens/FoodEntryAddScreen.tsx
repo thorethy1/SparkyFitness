@@ -178,7 +178,7 @@ const FoodEntryAddScreen: React.FC<FoodEntryAddScreenProps> = ({
 
   const isLocalFood = activeItem.source === 'local';
   const hasExternalVariants = !!(
-    activeItem.externalVariants && activeItem.externalVariants.length > 1
+    activeItem.externalVariants && activeItem.externalVariants.length >= 1
   );
   const [selectedVariantId, setSelectedVariantId] = useState<string | undefined>(
     hasExternalVariants ? item.variantId ?? 'ext-0' : item.variantId,
@@ -1003,7 +1003,7 @@ const FoodEntryAddScreen: React.FC<FoodEntryAddScreenProps> = ({
                 "1 serving \u00b7 1 serving per serving". Keep it for ml/g/etc.
                 where "X ml per serving" is meaningful info. */}
             {displayValues.servingUnit !== 'serving' &&
-              (variantPickerOptions.length > 1 ? (
+              (variantPickerOptions.length > 0 ? (
               <BottomSheetPicker
                 value={selectedVariantId ?? variantPickerOptions[0]?.id}
                 options={variantPickerOptions.map((variant) => ({
