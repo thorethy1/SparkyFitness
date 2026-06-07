@@ -6,10 +6,10 @@ const { getIosAppGroup } = require('./app.identifiers.js');
 const APP_NAME = 'SparkyFitness';
 const APP_SLUG = 'sparkyfitnessmobile';
 const ANDROID_PROD_BUNDLE_IDENTIFIER = 'com.thorethy.sparkyfitness';
-const IOS_PROD_BUNDLE_IDENTIFIER = 'com.thorethy.sparkyfitness';
-const DEV_BUNDLE_IDENTIFIER = process.env.EXPO_DEV_BUNDLE_IDENTIFIER || 'com.thorethy.sparkyfitness.dev';
-const DEV_APPLE_TEAM_ID = process.env.EXPO_DEV_APPLE_TEAM_ID || '';
-const PROD_APPLE_TEAM_ID = process.env.EXPO_PROD_APPLE_TEAM_ID || '';
+const IOS_PROD_BUNDLE_IDENTIFIER = 'app.sweetpotato2633.coral4840';
+const DEV_BUNDLE_IDENTIFIER = process.env.EXPO_DEV_BUNDLE_IDENTIFIER || 'app.sweetpotato2633.coral4840';
+const DEV_APPLE_TEAM_ID = 'GYA6B57RGG';
+const PROD_APPLE_TEAM_ID = 'GYA6B57RGG';
 
 const DEV_PACKAGE = DEV_BUNDLE_IDENTIFIER;
 const PROD_PACKAGE = ANDROID_PROD_BUNDLE_IDENTIFIER;
@@ -140,7 +140,7 @@ export default ({ config }: ConfigContext): Partial<ExpoConfig> => {
     plugins: [
       ...(config.plugins ?? []),
       './plugins/withGlanceAndroidSupport',
-      './plugins/withCalorieWidget',
+      ...(process.env.SKIP_WIDGET ? [] : ['./plugins/withCalorieWidget']),
       ...(!isDev ? prodPlugins : []),
     ],
     extra: {
