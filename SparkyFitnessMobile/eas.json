@@ -6,10 +6,12 @@
     "build": {
         "development": {
             "env": {
-                "APP_VARIANT": "development"
+                "APP_VARIANT": "development",
+                "SKIP_WIDGET": "true"
             },
             "developmentClient": true,
-            "distribution": "internal"
+            "distribution": "internal",
+            "credentialsSource": "local"
         },
         "preview": {
             "env": {
