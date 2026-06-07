@@ -977,6 +977,7 @@ const FoodEntryAddScreen: React.FC<FoodEntryAddScreenProps> = ({
           }}
           goalsLoading={isGoalsLoading}
           showNetCarbs={showNetCarbs}
+          is_verified={activeItem.is_verified}
         />
 
         <View className="mt-2">

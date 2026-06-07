@@ -58,6 +58,7 @@ export interface BarcodeFood {
   provider_external_id?: string | null;
   provider_type?: string;
   is_custom: boolean;
+  is_verified?: boolean;
   default_variant: {
     id?: string;
     serving_size: number;
@@ -78,6 +79,7 @@ export interface BarcodeFood {
     vitamin_a?: number;
     vitamin_c?: number;
   };
+  variants?: NormalizedFoodVariant[];
 }
 
 export type BarcodeLookupResult =
@@ -586,7 +588,9 @@ export async function lookupBarcodeV2(barcode: string): Promise<BarcodeLookupRes
     provider_external_id: food.provider_external_id,
     provider_type: food.provider_type,
     is_custom: food.is_custom,
+    is_verified: food.is_verified,
     default_variant: food.default_variant,
+    variants: food.variants,
   };
 
   if (response.source === 'local') {
