@@ -5,11 +5,11 @@ const { getIosAppGroup } = require('./app.identifiers.js');
 
 const APP_NAME = 'SparkyFitness';
 const APP_SLUG = 'sparkyfitnessmobile';
-const ANDROID_PROD_BUNDLE_IDENTIFIER = 'com.SparkyApps.SparkyFitnessMobile';
-const IOS_PROD_BUNDLE_IDENTIFIER = 'com.SparkyApps.SparkyFitnessMobile';
+const ANDROID_PROD_BUNDLE_IDENTIFIER = 'com.thorethy.sparkyfitness';
+const IOS_PROD_BUNDLE_IDENTIFIER = 'com.thorethy.sparkyfitness';
+const DEV_BUNDLE_IDENTIFIER = process.env.EXPO_DEV_BUNDLE_IDENTIFIER || 'com.thorethy.sparkyfitness.dev';
 const DEV_APPLE_TEAM_ID = process.env.EXPO_DEV_APPLE_TEAM_ID || '';
 const PROD_APPLE_TEAM_ID = process.env.EXPO_PROD_APPLE_TEAM_ID || '';
-const DEV_BUNDLE_IDENTIFIER = process.env.EXPO_DEV_BUNDLE_IDENTIFIER || 'org.SparkyApps.SparkyFitnessMobile.dev';
 
 const DEV_PACKAGE = DEV_BUNDLE_IDENTIFIER;
 const PROD_PACKAGE = ANDROID_PROD_BUNDLE_IDENTIFIER;
