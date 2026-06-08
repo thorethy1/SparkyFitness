@@ -197,6 +197,7 @@ const FoodSearchScreen: React.FC<FoodSearchScreenProps> = ({ navigation, route }
       date,
       pickerMode: isMealBuilderMode ? 'meal-builder' : undefined,
       returnDepth: isMealBuilderMode ? 2 : undefined,
+      providerId: selectedProvider ?? undefined,
     });
   };
 

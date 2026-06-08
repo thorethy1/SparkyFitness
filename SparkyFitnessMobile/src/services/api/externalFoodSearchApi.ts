@@ -485,18 +485,27 @@ export function transformNormalizedFood(food: NormalizedFood, providerType: stri
     vitamin_c: v.vitamin_c,
   });
 
-  // FoodEntryAddScreen selects ext-0 (first variant) by default, so the
-  // default variant must come first to keep search/add calories consistent.
-  const defaultFirst = food.variants
-    ? [dv, ...food.variants.filter((v) => v !== dv)]
+  const isReferenceServing = (v: NormalizedFoodVariant) =>
+    v.serving_size === 100 && (v.serving_unit === 'g' || v.serving_unit === 'ml');
+
+  const preferredVariant = isReferenceServing(dv) && food.variants
+    ? food.variants.find((v) => v !== dv && !isReferenceServing(v))
     : undefined;
-  const variants = defaultFirst?.map(mapVariant);
+
+  const displayVariant = preferredVariant ?? dv;
+
+  const orderedVariants = food.variants
+    ? preferredVariant
+      ? [preferredVariant, dv, ...food.variants.filter((v) => v !== dv && v !== preferredVariant)]
+      : [dv, ...food.variants.filter((v) => v !== dv)]
+    : undefined;
+  const variants = orderedVariants?.map(mapVariant);
 
   return {
     id: food.provider_external_id ?? food.id ?? '',
     name: food.name,
     brand: food.brand,
-    ...mapVariant(dv),
+    ...mapVariant(displayVariant),
     source: food.provider_type ?? providerType,
     variants: variants && variants.length > 0 ? variants : undefined,
     provider_verified: food.provider_verified === true,
@@ -554,9 +563,12 @@ interface V2BarcodeResponse {
   food: NormalizedFood | null;
 }
 
-export async function lookupBarcodeV2(barcode: string): Promise<BarcodeLookupResult> {
+export async function lookupBarcodeV2(barcode: string, providerId?: string): Promise<BarcodeLookupResult> {
+  const params = new URLSearchParams();
+  if (providerId) params.set('providerId', providerId);
+  const qs = params.toString();
   const response = await apiFetch<V2BarcodeResponse>({
-    endpoint: `/api/v2/foods/barcode/${barcode}`,
+    endpoint: `/api/v2/foods/barcode/${barcode}${qs ? `?${qs}` : ''}`,
     serviceName: 'External Food Search',
     operation: 'barcode lookup (v2)',
   });
