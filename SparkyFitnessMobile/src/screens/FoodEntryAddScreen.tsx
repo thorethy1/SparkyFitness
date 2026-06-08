@@ -55,6 +55,8 @@ import {
   buildLocalUnitVariants,
   buildLocalVariantOptions,
   foodInfoToUnitVariant,
+  formatServingDescription,
+  formatServingUnit,
   formatVariantLabel,
   resolveFoodDisplayValues,
   unitVariantToDisplayValues,
@@ -990,7 +992,9 @@ const FoodEntryAddScreen: React.FC<FoodEntryAddScreenProps> = ({
               onIncrement={() => adjustQuantity(1)}
             />
             <Text className="text-text-primary text-base font-medium ml-2">
-              {displayValues.servingUnit}
+              {displayValues.servingDescription
+                ? formatServingDescription(displayValues.servingDescription)
+                : formatServingUnit(displayValues.servingUnit)}
             </Text>
           </View>
           <View className="flex-row items-center mt-2">
@@ -1003,6 +1007,7 @@ const FoodEntryAddScreen: React.FC<FoodEntryAddScreenProps> = ({
                 "1 serving \u00b7 1 serving per serving". Keep it for ml/g/etc.
                 where "X ml per serving" is meaningful info. */}
             {displayValues.servingUnit !== 'serving' &&
+              !displayValues.servingDescription?.toLowerCase().includes('serving') &&
               (variantPickerOptions.length > 0 ? (
               <BottomSheetPicker
                 value={selectedVariantId ?? variantPickerOptions[0]?.id}
@@ -1021,7 +1026,9 @@ const FoodEntryAddScreen: React.FC<FoodEntryAddScreenProps> = ({
                   >
                     <Text className="text-text-secondary text-sm">
                       {' \u00b7 '}
-                      {displayValues.servingSize} {displayValues.servingUnit} per
+                      {displayValues.servingDescription
+                        ? formatServingDescription(displayValues.servingDescription)
+                        : `${displayValues.servingSize} ${formatServingUnit(displayValues.servingUnit)}`} per
                       serving
                     </Text>
                     {isCreateVariantPending ? (
@@ -1045,7 +1052,9 @@ const FoodEntryAddScreen: React.FC<FoodEntryAddScreenProps> = ({
             ) : (
               <Text className="text-text-secondary text-sm">
                 {' \u00b7 '}
-                {displayValues.servingSize} {displayValues.servingUnit} per
+                {displayValues.servingDescription
+                  ? formatServingDescription(displayValues.servingDescription)
+                  : `${displayValues.servingSize} ${formatServingUnit(displayValues.servingUnit)}`} per
                 serving
               </Text>
               ))}

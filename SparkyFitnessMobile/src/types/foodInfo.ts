@@ -113,6 +113,7 @@ export interface FoodInfoItem {
   sharedWithPublic?: boolean;
   servingSize: number;
   servingUnit: string;
+  servingDescription?: string;
   calories: number;
   protein: number;
   carbs: number;
@@ -182,6 +183,7 @@ export const externalFoodItemToFoodInfo = (item: ExternalFoodItem): FoodInfoItem
   brand: item.brand,
   servingSize: item.serving_size,
   servingUnit: item.serving_unit,
+  servingDescription: item.serving_description,
   calories: item.calories,
   protein: item.protein,
   carbs: item.carbs,

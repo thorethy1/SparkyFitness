@@ -187,32 +187,48 @@ const FoodScanScreen: React.FC<FoodScanScreenProps> = ({ navigation, route }) =>
         if (shouldFireSuccessHaptic) {
           fireSuccessHaptic();
         }
-        const defaultVariant = result.food.default_variant;
+        const dv = result.food.default_variant;
+        const isReferenceServing = (v: typeof dv) =>
+          v.serving_size === 100 && (v.serving_unit === 'g' || v.serving_unit === 'ml');
+        const hasPortionDescription = (v: typeof dv) =>
+          v.serving_description &&
+          v.serving_description.length > 0 &&
+          !v.serving_description.match(/^\d+(\.\d+)?\s*(g|ml|kg|l)$/i);
+        const preferredVariant = isReferenceServing(dv) && result.food.variants
+          ? result.food.variants.find((v) => v !== dv && hasPortionDescription(v))
+          : undefined;
+        const displayVariant = preferredVariant ?? dv;
+        const orderedVariants = result.food.variants
+          ? preferredVariant
+            ? [preferredVariant, dv, ...result.food.variants.filter((v) => v !== dv && v !== preferredVariant)]
+            : [dv, ...result.food.variants.filter((v) => v !== dv)]
+          : undefined;
         const item: FoodInfoItem = {
           id: result.food.provider_external_id ?? result.food.id ?? '',
           name: result.food.name,
           brand: result.food.brand,
-          servingSize: defaultVariant.serving_size,
-          servingUnit: defaultVariant.serving_unit,
-          calories: defaultVariant.calories,
-          protein: defaultVariant.protein,
-          carbs: defaultVariant.carbs,
-          fat: defaultVariant.fat,
-          fiber: defaultVariant.dietary_fiber,
-          saturatedFat: defaultVariant.saturated_fat,
-          sodium: defaultVariant.sodium,
-          sugars: defaultVariant.sugars,
-          transFat: defaultVariant.trans_fat,
-          potassium: defaultVariant.potassium,
-          calcium: defaultVariant.calcium,
-          iron: defaultVariant.iron,
-          cholesterol: defaultVariant.cholesterol,
-          vitaminA: defaultVariant.vitamin_a,
-          vitaminC: defaultVariant.vitamin_c,
-          variantId: defaultVariant.id,
+          servingSize: displayVariant.serving_size,
+          servingUnit: displayVariant.serving_unit,
+          servingDescription: displayVariant.serving_description ?? `${displayVariant.serving_size} ${displayVariant.serving_unit}`,
+          calories: displayVariant.calories,
+          protein: displayVariant.protein,
+          carbs: displayVariant.carbs,
+          fat: displayVariant.fat,
+          fiber: displayVariant.dietary_fiber,
+          saturatedFat: displayVariant.saturated_fat,
+          sodium: displayVariant.sodium,
+          sugars: displayVariant.sugars,
+          transFat: displayVariant.trans_fat,
+          potassium: displayVariant.potassium,
+          calcium: displayVariant.calcium,
+          iron: displayVariant.iron,
+          cholesterol: displayVariant.cholesterol,
+          vitaminA: displayVariant.vitamin_a,
+          vitaminC: displayVariant.vitamin_c,
+          variantId: displayVariant.id,
           source: 'external',
           provider_verified: result.food.provider_verified,
-          externalVariants: result.food.variants?.map((v) => ({
+          externalVariants: orderedVariants?.map((v) => ({
             serving_size: v.serving_size,
             serving_unit: v.serving_unit,
             serving_description: v.serving_description ?? `${v.serving_size} ${v.serving_unit}`,
