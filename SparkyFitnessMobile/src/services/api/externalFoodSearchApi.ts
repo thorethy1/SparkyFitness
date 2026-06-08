@@ -488,8 +488,11 @@ export function transformNormalizedFood(food: NormalizedFood, providerType: stri
   const isReferenceServing = (v: NormalizedFoodVariant) =>
     v.serving_size === 100 && (v.serving_unit === 'g' || v.serving_unit === 'ml');
 
+  const hasDescription = (v: NormalizedFoodVariant) =>
+    v.serving_description && v.serving_description.length > 0 && !v.serving_description.match(/^\d+(\.\d+)?\s*(g|ml|kg|l)$/i);
+
   const preferredVariant = isReferenceServing(dv) && food.variants
-    ? food.variants.find((v) => v !== dv && !isReferenceServing(v))
+    ? food.variants.find((v) => v !== dv && hasDescription(v))
     : undefined;
 
   const displayVariant = preferredVariant ?? dv;

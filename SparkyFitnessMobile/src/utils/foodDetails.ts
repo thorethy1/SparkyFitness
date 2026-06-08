@@ -254,8 +254,11 @@ export function buildExternalVariantOptions(
 ): FoodVariantOptionData[] {
   return (variants ?? []).map((variant, index) => {
     const desc = variant.serving_description || '';
-    const cleanDesc = desc.split('.')[0];
-    const formatted = cleanDesc.charAt(0).toUpperCase() + cleanDesc.slice(1);
+    const cleanDesc = desc.replace(/\./g, ' ').trim();
+    const formatted = cleanDesc
+      .split(' ')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
     return {
       id: `ext-${index}`,
       label: `${formatted} (${variant.calories} cal)`,

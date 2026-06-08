@@ -673,7 +673,12 @@ const FoodSearchScreen: React.FC<FoodSearchScreenProps> = ({ navigation, route }
             <>
               <Text className="text-text-primary text-base font-semibold">{item.calories} cal</Text>
               <Text className="text-text-secondary text-xs">
-                {item.serving_description ?? `${item.serving_size} ${item.serving_unit}`}
+                {(item.serving_description ?? `${item.serving_size} ${item.serving_unit}`)
+                  .replace(/\./g, ' ')
+                  .trim()
+                  .split(' ')
+                  .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                  .join(' ')}
               </Text>
             </>
           )}
