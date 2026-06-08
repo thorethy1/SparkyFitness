@@ -30,7 +30,6 @@ const FoodNutritionSummary: React.FC<FoodNutritionSummaryProps> = ({
   provider_verified = false,
 }) => {
   const accentColor = useCSSVariable('--color-accent-primary') as string;
-  const verifiedColor = String(useCSSVariable('--color-success')) || '#4CAF50';
 
   const [showMoreNutrients, setShowMoreNutrients] = useState(false);
 
@@ -69,7 +68,7 @@ const FoodNutritionSummary: React.FC<FoodNutritionSummaryProps> = ({
           <Text className="text-text-primary text-3xl font-bold">{name}</Text>
           {provider_verified ? (
             <View className="flex-row items-center bg-emerald-100 dark:bg-emerald-900/40 rounded-md px-2 py-0.5 ml-1">
-              <Icon name="checkmark-circle" size={14} color={verifiedColor} />
+              <Icon name="checkmark-circle" size={14} color="#22c55e" />
               <Text className="text-emerald-700 dark:text-emerald-300 text-xs font-semibold ml-1">Verified</Text>
             </View>
           ) : null}

@@ -506,6 +506,7 @@ export function transformNormalizedFood(food: NormalizedFood, providerType: stri
     name: food.name,
     brand: food.brand,
     ...mapVariant(displayVariant),
+    serving_description: displayVariant.serving_description ?? `${displayVariant.serving_size} ${displayVariant.serving_unit}`,
     source: food.provider_type ?? providerType,
     variants: variants && variants.length > 0 ? variants : undefined,
     provider_verified: food.provider_verified === true,
