@@ -4,13 +4,13 @@ import { Uniwind, useUniwind } from 'uniwind';
 
 const THEME_KEY = '@HealthConnect:appTheme';
 
-export type ThemePreference = 'System' | 'Light' | 'Dark' | 'Amoled';
+export type ThemePreference = 'System' | 'Light' | 'Dark' | 'Amoled' | 'Red';
 
 /**
  * Convert user-facing theme preference to Uniwind theme string
  */
-function toUniwindTheme(pref: ThemePreference): 'system' | 'light' | 'dark' | 'amoled' {
-  return pref === 'System' ? 'system' : (pref.toLowerCase() as 'light' | 'dark' | 'amoled');
+function toUniwindTheme(pref: ThemePreference): 'system' | 'light' | 'dark' | 'amoled' | 'red' {
+  return pref === 'System' ? 'system' : (pref.toLowerCase() as 'light' | 'dark' | 'amoled' | 'red');
 }
 
 /**
@@ -22,6 +22,7 @@ function fromUniwindTheme(theme: string, hasAdaptiveThemes: boolean): ThemePrefe
     case 'light': return 'Light';
     case 'dark': return 'Dark';
     case 'amoled': return 'Amoled';
+    case 'red': return 'Red';
     default: return 'System';
   }
 }
@@ -33,7 +34,7 @@ function fromUniwindTheme(theme: string, hasAdaptiveThemes: boolean): ThemePrefe
 export async function initializeTheme(): Promise<void> {
   try {
     const savedTheme = await AsyncStorage.getItem(THEME_KEY);
-    const preference = savedTheme ? (savedTheme as ThemePreference) : 'System';
+    const preference = savedTheme ? (savedTheme as ThemePreference) : 'Red';
     Uniwind.setTheme(toUniwindTheme(preference));
   } catch (error) {
     console.error('Failed to load theme preference:', error);

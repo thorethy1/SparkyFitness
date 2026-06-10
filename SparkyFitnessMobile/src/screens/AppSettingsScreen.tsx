@@ -22,6 +22,7 @@ const themeOptions: { label: string; value: ThemePreference }[] = [
   { label: 'Light', value: 'Light' },
   { label: 'Dark', value: 'Dark' },
   { label: 'AMOLED', value: 'Amoled' },
+  { label: 'Red', value: 'Red' },
   { label: 'System', value: 'System' },
 ];
 
