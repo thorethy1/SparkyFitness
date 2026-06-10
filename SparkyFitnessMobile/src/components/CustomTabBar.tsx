@@ -2,6 +2,8 @@ import React from 'react';
 import { View, TouchableOpacity, Text, Platform, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCSSVariable } from 'uniwind';
+import { BlurView } from 'expo-blur';
+import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import Icon, { type IconName } from './Icon';
 
@@ -21,7 +23,7 @@ const TAB_ICONS: Record<string, IconName> = {
   Settings: 'settings',
 };
 
-const CustomTabBar: React.FC<BottomTabBarProps> = ({
+const LiquidGlassTabBar: React.FC<BottomTabBarProps> = ({
   state,
   descriptors,
   navigation,
@@ -36,15 +38,23 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
       '--color-accent-primary',
     ]) as [string, string, string, string, string];
 
+  const useLiquidGlass = Platform.OS === 'ios' && isLiquidGlassAvailable();
+
   return (
     <View
       className="flex-row items-end overflow-visible"
-      style={{
-        backgroundColor: chrome,
-        borderTopColor: chromeBorder,
-        borderTopWidth: StyleSheet.hairlineWidth,
-        paddingBottom: Math.max(insets.bottom, 4),
-      }}
+      style={[
+        {
+          paddingBottom: Math.max(insets.bottom, 4),
+        },
+        useLiquidGlass
+          ? { backgroundColor: 'transparent' }
+          : {
+              backgroundColor: chrome,
+              borderTopColor: chromeBorder,
+              borderTopWidth: StyleSheet.hairlineWidth,
+            },
+      ]}
     >
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
@@ -84,10 +94,10 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
                   backgroundColor: accentPrimary,
                   ...Platform.select({
                     ios: {
-                      shadowColor: '#000',
-                      shadowOffset: { width: 2, height: 4 },
-                      shadowOpacity: 0.25,
-                      shadowRadius: 6,
+                      shadowColor: accentPrimary,
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: 0.4,
+                      shadowRadius: 8,
                     },
                     android: {
                       elevation: 4,
@@ -137,6 +147,54 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
         );
       })}
     </View>
+  );
+};
+
+const CustomTabBar: React.FC<BottomTabBarProps> = (props) => {
+  const insets = useSafeAreaInsets();
+  const [chrome, chromeBorder] = useCSSVariable([
+    '--color-chrome',
+    '--color-chrome-border',
+  ]) as [string, string];
+
+  const useLiquidGlass = Platform.OS === 'ios' && isLiquidGlassAvailable();
+
+  if (useLiquidGlass) {
+    return (
+      <GlassView
+        glassEffectStyle="regular"
+        style={{
+          paddingBottom: Math.max(insets.bottom, 4),
+          borderTopWidth: StyleSheet.hairlineWidth,
+          borderTopColor: chromeBorder,
+        }}
+      >
+        <LiquidGlassTabBar {...props} />
+      </GlassView>
+    );
+  }
+
+  // Fallback: BlurView for older iOS / other platforms
+  return (
+    <BlurView
+      intensity={80}
+      tint="dark"
+      style={{
+        paddingBottom: 0,
+        borderTopWidth: StyleSheet.hairlineWidth,
+        borderTopColor: chromeBorder,
+      }}
+    >
+      <View
+        className="flex-row items-end overflow-visible"
+        style={{
+          backgroundColor: `${chrome}CC`, // semi-transparent chrome
+          paddingBottom: Math.max(insets.bottom, 4),
+        }}
+      >
+        {React.createElement(LiquidGlassTabBar, props)}
+      </View>
+    </BlurView>
   );
 };
 
