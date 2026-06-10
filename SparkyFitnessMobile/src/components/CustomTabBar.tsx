@@ -46,11 +46,20 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
       style={StyleSheet.absoluteFill}
     />
   ) : (
-    <BlurView
-      intensity={80}
-      tint="dark"
-      style={StyleSheet.absoluteFill}
-    />
+    <>
+      <BlurView
+        intensity={100}
+        tint="dark"
+        style={StyleSheet.absoluteFill}
+      />
+      <View
+        style={[
+          StyleSheet.absoluteFill,
+          { backgroundColor: 'rgba(20, 16, 17, 0.3)' },
+        ]}
+        pointerEvents="none"
+      />
+    </>
   );
 
   return (
