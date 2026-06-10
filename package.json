@@ -18,8 +18,15 @@
   },
   "pnpm": {
     "supportedArchitectures": {
-      "os": ["current", "linux"],
-      "cpu": ["current", "x64", "arm64"]
+      "os": [
+        "current",
+        "linux"
+      ],
+      "cpu": [
+        "current",
+        "x64",
+        "arm64"
+      ]
     },
     "overrides": {
       "side-channel": "1.0.6",
@@ -41,6 +48,7 @@
     }
   },
   "dependencies": {
+    "expo": "55.0.0",
     "js-yaml": "^4.1.0"
   }
 }
