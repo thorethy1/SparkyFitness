@@ -1,9 +1,8 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { View, TouchableOpacity, Text, Platform, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCSSVariable } from 'uniwind';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { BlurView } from 'expo-blur';
 import Icon, { type IconName } from './Icon';
 
@@ -38,41 +37,32 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
       '--color-accent-primary',
     ]) as [string, string, string, string, string];
 
-  const hasLiquidGlass = useMemo(() => isLiquidGlassAvailable(), []);
-
-  const barBackground = hasLiquidGlass ? (
-    <GlassView
-      glassEffectStyle="regular"
-      style={StyleSheet.absoluteFill}
-    />
-  ) : (
-    <>
-      <BlurView
-        intensity={100}
-        tint="dark"
-        style={StyleSheet.absoluteFill}
-      />
-      <View
-        style={[
-          StyleSheet.absoluteFill,
-          { backgroundColor: 'rgba(20, 16, 17, 0.3)' },
-        ]}
-        pointerEvents="none"
-      />
-    </>
-  );
-
   return (
     <View
       className="flex-row items-end overflow-visible"
       style={{
         backgroundColor: 'transparent',
-        borderTopColor: chromeBorder,
-        borderTopWidth: StyleSheet.hairlineWidth,
         paddingBottom: Math.max(insets.bottom, 4),
       }}
     >
-      {barBackground}
+      {/* Liquid Glass background: heavy blur + dark tint + border */}
+      <BlurView
+        intensity={100}
+        tint="dark"
+        style={StyleSheet.absoluteFill}
+      />
+      {/* Glass overlay: semi-transparent dark with subtle border */}
+      <View
+        style={[
+          StyleSheet.absoluteFill,
+          {
+            backgroundColor: 'rgba(20, 16, 17, 0.45)',
+            borderTopWidth: StyleSheet.hairlineWidth,
+            borderTopColor: 'rgba(255, 255, 255, 0.1)',
+          },
+        ]}
+        pointerEvents="none"
+      />
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
         const isFocused = state.index === index;
@@ -109,12 +99,14 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
                 className="w-14 h-14 rounded-full items-center justify-center -mt-5"
                 style={{
                   backgroundColor: accentPrimary,
+                  borderWidth: 2,
+                  borderColor: 'rgba(255, 255, 255, 0.2)',
                   ...Platform.select({
                     ios: {
                       shadowColor: accentPrimary,
                       shadowOffset: { width: 0, height: 4 },
-                      shadowOpacity: 0.4,
-                      shadowRadius: 8,
+                      shadowOpacity: 0.5,
+                      shadowRadius: 10,
                     },
                     android: {
                       elevation: 6,
