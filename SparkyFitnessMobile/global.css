@@ -196,5 +196,65 @@
       --color-text-danger-subtle: hsl(357, 88%, 88%);
       --color-icon-danger:       hsl(358, 80%, 65%);
     }
+
+    @variant red {
+      --color-background:        #141011;
+      --color-surface:           #201C1E;
+      --color-raised:            #2A2426;
+      --color-chrome:            #141011;
+
+      --color-border-subtle:     #2A2426;
+      --color-border:            #3A3234;
+      --color-border-strong:     #4A4042;
+      --color-chrome-border:     #2A2426;
+
+      --color-text-primary:      #F2F0F0;
+      --color-text-secondary:    #B9B1B1;
+      --color-text-muted:        #7A7070;
+      --color-icon-decorative:   #7A7070;
+
+      --color-accent-primary:    #E35D5B;
+      --color-accent-muted:      #C44A48;
+      --color-accent-text:       #FFD6D5;
+
+      --color-text-link:         #E35D5B;
+
+      --color-tab-active:        #E35D5B;
+      --color-tab-inactive:      #7A7070;
+      --color-form-enabled:      #B9B1B1;
+      --color-form-disabled:     #4A4042;
+
+      --color-calories:          #E35D5B;
+      --color-macro-protein:     #F0A060;
+      --color-macro-carbs:       #60C080;
+      --color-macro-fat:         #60A0E0;
+      --color-macro-fiber:       #80A060;
+
+      --color-hydration:         #50A0D0;
+      --color-exercise:          #50C0A0;
+
+      --color-cat-slate:         #808080;
+      --color-cat-pink:          #E06080;
+      --color-cat-violet:        #A080E0;
+      --color-cat-orange:        #E0A060;
+
+      --color-progress-track:    #2A2426;
+      --color-progress-overfill: #E35D5B;
+
+      --color-bg-success:        #1A3020;
+      --color-bg-info:           #1A2030;
+      --color-bg-warning:        #302A10;
+      --color-bg-danger:         #401010;
+      --color-bg-danger-subtle:  #301010;
+
+      --color-text-success:      #80D0A0;
+      --color-icon-success:      #50C080;
+      --color-text-info:         #A0C0FF;
+      --color-text-warning:      #E0C060;
+      --color-icon-warning:      #E0A040;
+      --color-text-danger:       #FFB0B0;
+      --color-text-danger-subtle: #E08080;
+      --color-icon-danger:       #E35D5B;
+    }
   }
 }
