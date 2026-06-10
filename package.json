@@ -48,7 +48,6 @@
     }
   },
   "dependencies": {
-    "expo": "55.0.0",
     "js-yaml": "^4.1.0"
   }
 }
