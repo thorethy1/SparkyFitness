@@ -198,63 +198,63 @@
     }
 
     @variant red {
-      --color-background:        hsl(0, 8%, 8%);
-      --color-surface:           hsl(0, 6%, 12%);
-      --color-raised:            hsl(0, 5%, 16%);
-      --color-chrome:            hsla(0, 0%, 6%, 0.9);
+      --color-background:        #141011;
+      --color-surface:           #201C1E;
+      --color-raised:            #2a2426;
+      --color-chrome:            rgba(20, 16, 17, 0.9);
 
-      --color-border-subtle:     hsl(0, 10%, 14%);
-      --color-border:            hsl(0, 12%, 18%);
-      --color-border-strong:     hsl(0, 14%, 22%);
-      --color-chrome-border:     hsl(0, 10%, 15%);
+      --color-border-subtle:     #2e2628;
+      --color-border:            #3a3032;
+      --color-border-strong:     #4a3e40;
+      --color-chrome-border:     #32282a;
 
-      --color-text-primary:      hsl(0, 10%, 92%);
-      --color-text-secondary:    hsl(0, 8%, 70%);
-      --color-text-muted:        hsl(0, 6%, 50%);
-      --color-icon-decorative:   hsl(0, 6%, 50%);
+      --color-text-primary:      #F2F0F0;
+      --color-text-secondary:    #B9B1B1;
+      --color-text-muted:        #7a7272;
+      --color-icon-decorative:   #7a7272;
 
-      --color-accent-primary:    hsl(356, 78%, 58%);
-      --color-accent-muted:      hsl(356, 65%, 62%);
-      --color-accent-text:       hsl(356, 100%, 96%);
+      --color-accent-primary:    #E35D5B;
+      --color-accent-muted:      #c44d4b;
+      --color-accent-text:       #fce9e9;
 
-      --color-text-link:         hsl(356, 72%, 64%);
+      --color-text-link:         #e8706e;
 
-      --color-tab-active:        hsl(356, 78%, 58%);
-      --color-tab-inactive:      hsl(0, 10%, 50%);
-      --color-form-enabled:      hsl(356, 30%, 60%);
-      --color-form-disabled:     hsl(0, 8%, 18%);
+      --color-tab-active:        #E35D5B;
+      --color-tab-inactive:      #8a8080;
+      --color-form-enabled:      #E35D5B;
+      --color-form-disabled:     #2e2628;
 
-      --color-calories:          hsl(356, 62%, 68%);
-      --color-macro-protein:     hsl(35, 70%, 64%);
-      --color-macro-carbs:       hsl(124, 36%, 66%);
-      --color-macro-fat:         hsl(195, 60%, 67%);
-      --color-macro-fiber:       hsl(126, 25%, 45%);
+      --color-calories:          #E35D5B;
+      --color-macro-protein:     #d4a060;
+      --color-macro-carbs:       #7cb87c;
+      --color-macro-fat:         #6db8d8;
+      --color-macro-fiber:       #8aaa5d;
 
-      --color-hydration:         hsl(200, 50%, 52%);
-      --color-exercise:          hsl(158, 49%, 48%);
+      --color-hydration:         #5a9ec7;
+      --color-exercise:          #5daa8f;
 
-      --color-cat-slate:         hsl(220, 10%, 48%);
-      --color-cat-pink:          hsl(340, 50%, 60%);
-      --color-cat-violet:        hsl(265, 50%, 60%);
-      --color-cat-orange:        hsl(22, 55%, 60%);
+      --color-cat-slate:         #7a8a9a;
+      --color-cat-pink:          #c77d9a;
+      --color-cat-violet:        #9a7dc7;
+      --color-cat-orange:        #c79a6d;
 
-      --color-progress-track:    hsl(0, 25%, 15%);
-      --color-progress-overfill: hsl(357, 66%, 65%);
+      --color-progress-track:    #2e2628;
+      --color-progress-overfill: #E35D5B;
 
-      --color-bg-success:        hsl(159, 40%, 14%);
-      --color-bg-info:           hsl(220, 42%, 18%);
-      --color-bg-warning:        hsl(36, 42%, 24%);
-      --color-bg-danger:         hsl(358, 46%, 30%);
-      --color-bg-danger-subtle:  hsl(358, 46%, 14%);
+      --color-bg-success:        #1a3a2a;
+      --color-bg-info:           #1a2a3a;
+      --color-bg-warning:        #3a2a1a;
+      --color-bg-danger:         #4a2020;
+      --color-bg-danger-subtle:  #3a1a1a;
 
-      --color-text-success:      hsl(160, 81%, 88%);
-      --color-icon-success:      hsl(145, 79%, 57%);
-      --color-text-info:         hsl(214, 100%, 91%);
-      --color-text-warning:      hsl(43, 86%, 86%);
-      --color-icon-warning:      hsl(38, 90%, 60%);
-      --color-text-danger:       hsl(357, 68%, 94%);
-      --color-text-danger-subtle: hsl(357, 88%, 88%);
-      --color-icon-danger:       hsl(358, 80%, 65%);
+      --color-text-success:      #a0d8b8;
+      --color-icon-success:      #4cd18f;
+      --color-text-info:         #a0d0f0;
+      --color-text-warning:      #f0d8a0;
+      --color-icon-warning:      #e0a040;
+      --color-text-danger:       #f0b0b0;
+      --color-text-danger-subtle: #f0a0a0;
+      --color-icon-danger:       #E35D5B;
     }
   }
 }
