@@ -2,8 +2,8 @@
 // (targets/*/expo-target.config.js). Keep as plain CommonJS — target configs
 // can't load TypeScript/ESM.
 
-const IOS_APP_GROUP_DEV = 'group.org.SparkyApps.SparkyFitnessMobile.dev';
-const IOS_APP_GROUP_PROD = 'group.com.SparkyApps.SparkyFitnessMobile.shared';
+const IOS_APP_GROUP_DEV = 'group.6827d1df5271d2c4.5';
+const IOS_APP_GROUP_PROD = 'group.6827d1df5271d2c4.5';
 
 const isDevVariant = () => {
   const env = process.env.APP_VARIANT || 'dev';

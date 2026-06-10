@@ -69,3 +69,6 @@ docker/docker_volume/
 # TypeScript
 *.tsbuildinfo
 dossier sans titre/
+SparkyFitnessMobile/targets/
+SparkyFitnessMobile/SparkyFitness
+SparkyFitnessMobile/credentials.json
