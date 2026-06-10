@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, TouchableOpacity, Text, Platform, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCSSVariable } from 'uniwind';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
+import { BlurView } from 'expo-blur';
 import Icon, { type IconName } from './Icon';
 
 export const TAB_BAR_HEIGHT = 56;
@@ -36,16 +38,32 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
       '--color-accent-primary',
     ]) as [string, string, string, string, string];
 
+  const hasLiquidGlass = useMemo(() => isLiquidGlassAvailable(), []);
+
+  const barBackground = hasLiquidGlass ? (
+    <GlassView
+      glassEffectStyle="regular"
+      style={StyleSheet.absoluteFill}
+    />
+  ) : (
+    <BlurView
+      intensity={80}
+      tint="dark"
+      style={StyleSheet.absoluteFill}
+    />
+  );
+
   return (
     <View
       className="flex-row items-end overflow-visible"
       style={{
-        backgroundColor: chrome,
+        backgroundColor: 'transparent',
         borderTopColor: chromeBorder,
         borderTopWidth: StyleSheet.hairlineWidth,
         paddingBottom: Math.max(insets.bottom, 4),
       }}
     >
+      {barBackground}
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
         const isFocused = state.index === index;
@@ -84,13 +102,13 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
                   backgroundColor: accentPrimary,
                   ...Platform.select({
                     ios: {
-                      shadowColor: '#000',
-                      shadowOffset: { width: 2, height: 4 },
-                      shadowOpacity: 0.25,
-                      shadowRadius: 6,
+                      shadowColor: accentPrimary,
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: 0.4,
+                      shadowRadius: 8,
                     },
                     android: {
-                      elevation: 4,
+                      elevation: 6,
                     },
                   }),
                 }}
