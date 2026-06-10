@@ -196,5 +196,65 @@
       --color-text-danger-subtle: hsl(357, 88%, 88%);
       --color-icon-danger:       hsl(358, 80%, 65%);
     }
+
+    @variant red {
+      --color-background:        hsl(0, 8%, 8%);
+      --color-surface:           hsl(0, 6%, 12%);
+      --color-raised:            hsl(0, 5%, 16%);
+      --color-chrome:            hsla(0, 0%, 6%, 0.9);
+
+      --color-border-subtle:     hsl(0, 10%, 14%);
+      --color-border:            hsl(0, 12%, 18%);
+      --color-border-strong:     hsl(0, 14%, 22%);
+      --color-chrome-border:     hsl(0, 10%, 15%);
+
+      --color-text-primary:      hsl(0, 10%, 92%);
+      --color-text-secondary:    hsl(0, 8%, 70%);
+      --color-text-muted:        hsl(0, 6%, 50%);
+      --color-icon-decorative:   hsl(0, 6%, 50%);
+
+      --color-accent-primary:    hsl(356, 78%, 58%);
+      --color-accent-muted:      hsl(356, 65%, 62%);
+      --color-accent-text:       hsl(356, 100%, 96%);
+
+      --color-text-link:         hsl(356, 72%, 64%);
+
+      --color-tab-active:        hsl(356, 78%, 58%);
+      --color-tab-inactive:      hsl(0, 10%, 50%);
+      --color-form-enabled:      hsl(356, 30%, 60%);
+      --color-form-disabled:     hsl(0, 8%, 18%);
+
+      --color-calories:          hsl(356, 62%, 68%);
+      --color-macro-protein:     hsl(35, 70%, 64%);
+      --color-macro-carbs:       hsl(124, 36%, 66%);
+      --color-macro-fat:         hsl(195, 60%, 67%);
+      --color-macro-fiber:       hsl(126, 25%, 45%);
+
+      --color-hydration:         hsl(200, 50%, 52%);
+      --color-exercise:          hsl(158, 49%, 48%);
+
+      --color-cat-slate:         hsl(220, 10%, 48%);
+      --color-cat-pink:          hsl(340, 50%, 60%);
+      --color-cat-violet:        hsl(265, 50%, 60%);
+      --color-cat-orange:        hsl(22, 55%, 60%);
+
+      --color-progress-track:    hsl(0, 25%, 15%);
+      --color-progress-overfill: hsl(357, 66%, 65%);
+
+      --color-bg-success:        hsl(159, 40%, 14%);
+      --color-bg-info:           hsl(220, 42%, 18%);
+      --color-bg-warning:        hsl(36, 42%, 24%);
+      --color-bg-danger:         hsl(358, 46%, 30%);
+      --color-bg-danger-subtle:  hsl(358, 46%, 14%);
+
+      --color-text-success:      hsl(160, 81%, 88%);
+      --color-icon-success:      hsl(145, 79%, 57%);
+      --color-text-info:         hsl(214, 100%, 91%);
+      --color-text-warning:      hsl(43, 86%, 86%);
+      --color-icon-warning:      hsl(38, 90%, 60%);
+      --color-text-danger:       hsl(357, 68%, 94%);
+      --color-text-danger-subtle: hsl(357, 88%, 88%);
+      --color-icon-danger:       hsl(358, 80%, 65%);
+    }
   }
 }
