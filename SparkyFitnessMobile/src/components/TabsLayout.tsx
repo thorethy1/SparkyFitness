@@ -1,5 +1,6 @@
 import React from 'react';
-import { Platform, View, TouchableOpacity, StyleSheet } from 'react-native';
+import { Platform } from 'react-native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeBottomTabNavigator } from '@bottom-tabs/react-navigation';
 import DashboardScreen from '../screens/DashboardScreen';
@@ -10,112 +11,119 @@ import type { TabParamList } from '../types/navigation';
 import type { AppleIcon } from 'react-native-bottom-tabs';
 import { withErrorBoundary } from './ScreenErrorBoundary';
 import CustomTabBar from './CustomTabBar';
-import Icon from './Icon';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useCSSVariable } from 'uniwind';
-import { BlurView } from 'expo-blur';
-import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
+
+const NON_ADD_TABS = ['Dashboard', 'Diary', 'Library', 'Settings'] as const;
+type NonAddTabName = typeof NON_ADD_TABS[number];
+
+let lastActiveTab: NonAddTabName = 'Dashboard';
+
+function rememberActiveTab(routeName: string) {
+  if ((NON_ADD_TABS as readonly string[]).includes(routeName)) {
+    lastActiveTab = routeName as NonAddTabName;
+  }
+}
+
+const AddRedirectScreen = () => {
+  const navigation = useNavigation();
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const frame = requestAnimationFrame(() => {
+        navigation.navigate(lastActiveTab as never);
+      });
+
+      return () => cancelAnimationFrame(frame);
+    }, [navigation]),
+  );
+
+  return null;
+};
 
 // Tab screens — no Go Back (tab bar provides navigation)
 const SafeDashboard = withErrorBoundary(DashboardScreen, 'Dashboard');
 const SafeDiary = withErrorBoundary(DiaryScreen, 'Diary');
 const SafeLibrary = withErrorBoundary(LibraryScreen, 'Library');
 
-// Native iOS Tab Navigator (iOS 26+ Liquid Glass) — NO Add tab, button is overlay
+// Native iOS Tab Navigator (iOS 26+ Liquid Glass)
 const NativeTab = createNativeBottomTabNavigator<TabParamList>();
 
 // Fallback Tab Navigator (Android / iOS < 26)
 const FallbackTab = createBottomTabNavigator<TabParamList>();
 
 export function NativeTabsLayout({ onAddPress }: { onAddPress?: () => void }) {
-  const insets = useSafeAreaInsets();
-  const [accentPrimary] = useCSSVariable(['--color-accent-primary']) as [string];
-  const useLiquidGlass = Platform.OS === 'ios' && isLiquidGlassAvailable();
-
   return (
-    <View style={StyleSheet.absoluteFill}>
-      <NativeTab.Navigator
-        initialRouteName="Dashboard"
-      >
-        <NativeTab.Screen
-          name="Dashboard"
-          component={SafeDashboard}
-          options={{
-            tabBarLabel: 'Dashboard',
-            tabBarIcon: () => ({ sfSymbol: 'house' } as unknown as AppleIcon),
-          }}
-        />
-        <NativeTab.Screen
-          name="Diary"
-          component={SafeDiary}
-          options={{
-            tabBarLabel: 'Diary',
-            tabBarIcon: () => ({ sfSymbol: 'doc.text' } as unknown as AppleIcon),
-          }}
-        />
-        <NativeTab.Screen
-          name="Library"
-          component={SafeLibrary}
-          options={{
-            tabBarLabel: 'Library',
-            tabBarIcon: () => ({ sfSymbol: 'book' } as unknown as AppleIcon),
-          }}
-        />
-        <NativeTab.Screen
-          name="Settings"
-          component={SettingsScreen}
-          options={{
-            tabBarLabel: 'Settings',
-            tabBarIcon: () => ({ sfSymbol: 'gearshape' } as unknown as AppleIcon),
-          }}
-        />
-      </NativeTab.Navigator>
-
-      {/* Floating Add Button Overlay — positioned above the tab bar, between Diary and Library */}
-      <View
-        style={[
-          styles.addButtonContainer,
-          { bottom: insets.bottom + 28 },
-        ]}
-        pointerEvents="box-none"
-      >
-        {useLiquidGlass ? (
-          <GlassView
-            glassEffectStyle="regular"
-            style={styles.addButtonGlass}
-          >
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel="Add"
-              onPress={onAddPress}
-              activeOpacity={0.8}
-              style={[styles.addButton, { backgroundColor: accentPrimary }]}
-            >
-              <Icon name="add" size={28} color="#FFFFFF" weight="bold" />
-            </TouchableOpacity>
-          </GlassView>
-        ) : (
-          <BlurView intensity={80} tint="dark" style={styles.addButtonGlass}>
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel="Add"
-              onPress={onAddPress}
-              activeOpacity={0.8}
-              style={[styles.addButton, { backgroundColor: accentPrimary }]}
-            >
-              <Icon name="add" size={28} color="#FFFFFF" weight="bold" />
-            </TouchableOpacity>
-          </BlurView>
-        )}
-      </View>
-    </View>
+    <NativeTab.Navigator
+      initialRouteName="Dashboard"
+      screenListeners={{
+        state: (event) => {
+          const state = event.data.state;
+          const route = state.routes[state.index ?? 0];
+          rememberActiveTab(route.name);
+        },
+      }}
+    >
+      <NativeTab.Screen 
+        name="Dashboard" 
+        component={SafeDashboard} 
+        options={{
+          tabBarLabel: 'Dashboard',
+          tabBarIcon: () => ({ sfSymbol: 'house' } as unknown as AppleIcon),
+        }}
+      />
+      <NativeTab.Screen 
+        name="Diary" 
+        component={SafeDiary} 
+        options={{
+          tabBarLabel: 'Diary',
+          tabBarIcon: () => ({ sfSymbol: 'doc.text' } as unknown as AppleIcon),
+        }}
+      />
+      <NativeTab.Screen
+        name="Add"
+        component={AddRedirectScreen}
+        options={{
+          tabBarLabel: 'Add',
+          tabBarIcon: () => ({ sfSymbol: 'plus' } as unknown as AppleIcon),
+        }}
+        listeners={{
+          tabPress: (e) => {
+            e.preventDefault();
+            onAddPress?.();
+          },
+        }}
+      />
+      <NativeTab.Screen 
+        name="Library" 
+        component={SafeLibrary} 
+        options={{
+          tabBarLabel: 'Library',
+          tabBarIcon: () => ({ sfSymbol: 'book' } as unknown as AppleIcon),
+        }}
+      />
+      <NativeTab.Screen 
+        name="Settings" 
+        component={SettingsScreen} 
+        options={{
+          tabBarLabel: 'Settings',
+          tabBarIcon: () => ({ sfSymbol: 'gearshape' } as unknown as AppleIcon),
+        }}
+      />
+    </NativeTab.Navigator>
   );
 }
 
 export function FallbackTabsLayout() {
+  // The AddSheet is rendered in App.tsx with proper props
   return (
     <FallbackTab.Navigator
       initialRouteName="Dashboard"
+      screenListeners={{
+        state: (event) => {
+          const state = event.data.state;
+          const route = state.routes[state.index ?? 0];
+          rememberActiveTab(route.name);
+        },
+      }}
       screenOptions={{
         headerShown: false,
       }}
@@ -125,7 +133,7 @@ export function FallbackTabsLayout() {
       <FallbackTab.Screen name="Diary" component={SafeDiary} />
       <FallbackTab.Screen
         name="Add"
-        component={EmptyScreen}
+        component={AddRedirectScreen}
         listeners={{
           tabPress: (e) => {
             e.preventDefault();
@@ -146,39 +154,3 @@ export function TabsLayout({ onAddPress }: { onAddPress?: () => void }) {
   }
   return <FallbackTabsLayout />;
 }
-
-const EmptyScreen = () => null;
-
-const styles = StyleSheet.create({
-  addButtonContainer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  addButtonGlass: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    overflow: 'hidden',
-  },
-  addButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 6,
-      },
-    }),
-  },
-});
