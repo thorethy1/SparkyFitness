@@ -1,15 +1,19 @@
 import "tsx/cjs";
 import { ExpoConfig, ConfigContext } from 'expo/config';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { getIosAppGroup } = require('./app.identifiers.js');
+const { 
+  getIosAppGroup, 
+  getThorethyBundle, 
+  getThorethyWidgetBundle 
+} = require('./app.identifiers.js');
 
 const APP_NAME = 'SparkyFitness';
 const APP_SLUG = 'sparkyfitnessmobile';
-const ANDROID_PROD_BUNDLE_IDENTIFIER = 'com.SparkyApps.SparkyFitnessMobile';
-const IOS_PROD_BUNDLE_IDENTIFIER = 'com.SparkyApps.SparkyFitnessMobile';
+const ANDROID_PROD_BUNDLE_IDENTIFIER = 'com.thorethy.sparkyfitness';
+const IOS_PROD_BUNDLE_IDENTIFIER = 'app.sweetpotato2633.coral4840';
 const DEV_APPLE_TEAM_ID = process.env.EXPO_DEV_APPLE_TEAM_ID || '';
 const PROD_APPLE_TEAM_ID = process.env.EXPO_PROD_APPLE_TEAM_ID || '';
-const DEV_BUNDLE_IDENTIFIER = process.env.EXPO_DEV_BUNDLE_IDENTIFIER || 'org.SparkyApps.SparkyFitnessMobile.dev';
+const DEV_BUNDLE_IDENTIFIER = process.env.EXPO_DEV_BUNDLE_IDENTIFIER || 'app.sweetpotato2633.coral4840';
 
 const DEV_PACKAGE = DEV_BUNDLE_IDENTIFIER;
 const PROD_PACKAGE = ANDROID_PROD_BUNDLE_IDENTIFIER;
@@ -107,6 +111,7 @@ export default ({ config }: ConfigContext): Partial<ExpoConfig> => {
     ...config,
     name: APP_NAME,
     slug: APP_SLUG,
+    scheme: 'sparkyfitnessmobile',
     ios: {
       bundleIdentifier: isDev
         ? DEV_BUNDLE_IDENTIFIER
@@ -140,12 +145,22 @@ export default ({ config }: ConfigContext): Partial<ExpoConfig> => {
     plugins: [
       ...(config.plugins ?? []),
       './plugins/withGlanceAndroidSupport',
+      [
+        'expo-build-properties',
+        {
+          ios: {
+            deploymentTarget: '26.0',
+          },
+        }
+      ],
       ...(!isDev ? prodPlugins : []),
     ],
     extra: {
       ...config.extra,
       APP_VARIANT: environment,
       iosAppGroup: getIosAppGroup(),
+      thorethyBundle: getThorethyBundle(),
+      thorethyWidgetBundle: getThorethyWidgetBundle(),
       eas: {
         projectId: "8682f8ce-75d1-47c9-bb65-0579c19e0918",
       },

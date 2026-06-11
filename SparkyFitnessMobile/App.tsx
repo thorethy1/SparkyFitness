@@ -95,18 +95,21 @@ import { initNotifications } from './src/services/notifications';
 import { ensureTimezoneBootstrapped } from './src/services/api/preferencesApi';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeBottomTabNavigator } from '@bottom-tabs/react-navigation';
 import Toast from 'react-native-toast-message';
 import type { RootStackParamList, TabParamList } from './src/types/navigation';
+import type { AppleIcon } from 'react-native-bottom-tabs';
 import AddSheet, { addSheetRef } from './src/components/AddSheet';
 import { toastConfig } from './src/components/ui/toastConfig';
 import CustomTabBar from './src/components/CustomTabBar';
+import { TabsLayout } from './src/components/TabsLayout';
 import ActiveWorkoutBar, { navigationRef as rootNavigationRef } from './src/components/ActiveWorkoutBar';
 import WhatsNewBanner from './src/components/WhatsNewBanner';
 import { withErrorBoundary } from './src/components/ScreenErrorBoundary';
+import { isLiquidGlassAvailable } from 'expo-glass-effect';
 
 SplashScreen.preventAutoHideAsync();
 
-const Tab = createBottomTabNavigator<TabParamList>();
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 type TabStateSnapshot = {
@@ -116,7 +119,6 @@ type TabStateSnapshot = {
     params?: unknown;
   }>;
 };
-const EmptyScreen = () => null;
 const AUTO_SYNC_WATCHDOG_MS = 90_000;
 const androidModalAnimation =
   Platform.OS === 'android' ? ({ animation: 'slide_from_bottom' } as const) : {};
@@ -265,101 +267,45 @@ function AppContent() {
     return diaryParams?.selectedDate;
   }, []);
 
-  const handleAddFood = useCallback(() => {
-    const navigation = navigationRef.current;
-    if (!navigation) return;
+const handleAddFood = useCallback(async () => {
+    if (!rootNavigationRef.isReady()) return;
     const date = getActiveDiaryDate();
-    navigation.getParent()?.navigate('FoodSearch', { date });
+    rootNavigationRef.dispatch(CommonActions.navigate('FoodSearch', { date }));
   }, [getActiveDiaryDate]);
 
-  const handleBarcodeScan = useCallback(() => {
-    const navigation = navigationRef.current;
-    if (!navigation) return;
+  const handleBarcodeScan = useCallback(async () => {
+    if (!rootNavigationRef.isReady()) return;
     const date = getActiveDiaryDate();
-    navigation.getParent()?.navigate('FoodScan', { date });
+    rootNavigationRef.dispatch(CommonActions.navigate('FoodScan', { date }));
   }, [getActiveDiaryDate]);
 
-  const navigateFromSheet = useCallback((screen: keyof RootStackParamList, params?: RootStackParamList[keyof RootStackParamList]) => {
-    if (rootNavigationRef.isReady()) {
-      rootNavigationRef.dispatch(CommonActions.navigate({ name: screen, params }));
-      return;
-    }
-
-    navigationRef.current?.getParent()?.dispatch(CommonActions.navigate({ name: screen, params }));
+  const handleAddWorkout = useCallback(() => {
+    if (!rootNavigationRef.isReady()) return;
+    setTimeout(() => {
+      rootNavigationRef.dispatch(CommonActions.navigate('WorkoutAdd', { date: getActiveDiaryDate(), skipDraftLoad: true }));
+    }, 0);
   }, []);
 
-  const handleStartExerciseForm = useCallback(
-    async (screen: 'WorkoutAdd' | 'ActivityAdd' | 'PresetSearch') => {
-      const isConnected = queryClient.getQueryData(serverConnectionQueryKey);
-      if (!isConnected) {
-        Alert.alert(
-          'No Server Connected',
-          'Configure your server connection in Settings to add an exercise.',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            {
-              text: 'Go to Settings',
-              onPress: () => navigateFromSheet('Tabs', { screen: 'Settings' }),
-            },
-          ],
-        );
-        return;
-      }
+  const handleAddActivity = useCallback(() => {
+    if (!rootNavigationRef.isReady()) return;
+    setTimeout(() => {
+      rootNavigationRef.dispatch(CommonActions.navigate('ActivityAdd', { date: getActiveDiaryDate(), skipDraftLoad: true }));
+    }, 0);
+  }, []);
 
-      const date = getActiveDiaryDate();
-      const draft = await loadActiveDraft();
-      if (draft) {
-        Alert.alert(
-          'Draft in Progress',
-          `You have an unsaved ${draft.type === 'workout' ? 'workout' : 'activity'} draft. What would you like to do?`,
-          [
-            { text: 'Cancel', style: 'cancel' },
-            {
-              text: 'Resume Draft',
-              onPress: () => {
-                if (draft.type === 'workout') {
-                  navigateFromSheet('WorkoutAdd');
-                } else {
-                  navigateFromSheet('ActivityAdd');
-                }
-              },
-            },
-            {
-              text: 'Discard & Continue',
-              style: 'destructive',
-              onPress: async () => {
-                await clearDraft();
-                if (screen === 'PresetSearch') {
-                  navigateFromSheet('PresetSearch', { date });
-                } else {
-                  navigateFromSheet(screen, { date, skipDraftLoad: true });
-                }
-              },
-            },
-          ],
-        );
-        return;
-      }
-
-      if (screen === 'PresetSearch') {
-        navigateFromSheet('PresetSearch', { date });
-      } else {
-        navigateFromSheet(screen, { date, skipDraftLoad: true });
-      }
-    },
-    [navigateFromSheet, getActiveDiaryDate],
-  );
-
-  const handleAddWorkout = useCallback(() => handleStartExerciseForm('WorkoutAdd'), [handleStartExerciseForm]);
-  const handleAddActivity = useCallback(() => handleStartExerciseForm('ActivityAdd'), [handleStartExerciseForm]);
-  const handleAddFromPreset = useCallback(() => handleStartExerciseForm('PresetSearch'), [handleStartExerciseForm]);
+  const handleAddFromPreset = useCallback(() => {
+    if (!rootNavigationRef.isReady()) return;
+    const date = getActiveDiaryDate();
+    rootNavigationRef.dispatch(CommonActions.navigate('PresetSearch', { date }));
+  }, [getActiveDiaryDate]);
 
   const syncMutation = useSyncHealthData();
 
   const handleAddMeasurements = useCallback(() => {
+    if (!rootNavigationRef.isReady()) return;
     const date = getActiveDiaryDate();
-    navigateFromSheet('MeasurementsAdd', { date });
-  }, [getActiveDiaryDate, navigateFromSheet]);
+    rootNavigationRef.dispatch(CommonActions.navigate('MeasurementsAdd', { date }));
+  }, [getActiveDiaryDate]);
 
   const handleSyncHealthData = useCallback(async () => {
     if (syncMutation.isPending || isSyncClaimed()) return;
@@ -657,41 +603,11 @@ function AppContent() {
           />
           <Stack.Screen name="Tabs" options={{ gestureEnabled: false }}>
             {() => (
-              <Tab.Navigator
-                initialRouteName="Dashboard"
-                screenOptions={{
-                  headerShown: false,
-                }}
-                tabBar={(props) => (
-                  // Wrap the tab bar so the active workout HUD can sit
-                  // directly on top of it. Order matters: CustomTabBar is
-                  // a later sibling than ActiveWorkoutBar, so its Add button
-                  // (which uses -mt-5 to rise above the tab bar's top edge)
-                  // paints on top of the embedded bar — matching the mockup
-                  // where the + button visually bridges both bars.
-                  <View collapsable={false}>
-                    <WhatsNewBanner />
-                    <ActiveWorkoutBar variant="embedded" />
-                    <CustomTabBar {...props} />
-                  </View>
-                )}
-              >
-                <Tab.Screen name="Dashboard" component={SafeDashboard} />
-                <Tab.Screen name="Diary" component={SafeDiary} />
-                <Tab.Screen
-                  name="Add"
-                  component={EmptyScreen}
-                  listeners={({ navigation }) => ({
-                    tabPress: (e) => {
-                      e.preventDefault();
-                      navigationRef.current = navigation;
-                      addSheetRef.current?.present();
-                    },
-                  })}
-                />
-                <Tab.Screen name="Library" component={SafeLibrary} />
-                <Tab.Screen name="Settings" component={SettingsScreen} />
-              </Tab.Navigator>
+              <>
+                <WhatsNewBanner />
+                <ActiveWorkoutBar variant="embedded" />
+                <TabsLayout onAddPress={() => addSheetRef.current?.present()} />
+              </>
             )}
           </Stack.Screen>
           <Stack.Screen

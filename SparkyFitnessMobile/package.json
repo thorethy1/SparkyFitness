@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@bacons/apple-targets": "^4.0.6",
+    "@bottom-tabs/react-navigation": "^1.2.0",
     "@expo/vector-icons": "^15.0.3",
     "@gorhom/bottom-sheet": "^5.2.8",
     "@kingstinct/react-native-healthkit": "^13.3.1",

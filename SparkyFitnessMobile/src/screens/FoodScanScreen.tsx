@@ -266,6 +266,7 @@ const FoodScanScreen: React.FC<FoodScanScreenProps> = ({ navigation, route }) =>
   };
 
   const handleBarcodeScanned = async ({ data }: BarcodeScanningResult) => {
+    console.log('[FoodScan] Barcode scanned:', data, 'scanMode:', scanMode, 'scanned:', scanned);
     if (scanLock.current) return;
     scanLock.current = true;
     setScanned(true);
@@ -501,9 +502,9 @@ const FoodScanScreen: React.FC<FoodScanScreenProps> = ({ navigation, route }) =>
       <CameraView
         ref={cameraRef}
         onBarcodeScanned={scanMode === 'barcode' && !scanned ? handleBarcodeScanned : undefined}
-        barcodeScannerSettings={scanMode === 'barcode' ? {
-          barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e'],
-        } : undefined}
+        barcodeScannerSettings={{
+          barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128', 'code39', 'code93'],
+        }}
         style={StyleSheet.absoluteFillObject}
         enableTorch={flashlight}
       />

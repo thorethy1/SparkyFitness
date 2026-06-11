@@ -6,10 +6,17 @@
     "build": {
         "development": {
             "env": {
-                "APP_VARIANT": "development"
+                "APP_VARIANT": "development",
+                "EXPO_DEV_BUNDLE_IDENTIFIER": "app.sweetpotato2633.coral4840",
+                "EXPO_DEV_APPLE_TEAM_ID": "GYA6B57RGG",
+                "EXPO_IOS_APP_GROUP_DEV": "group.6827d1df5271d2c4.5"
             },
             "developmentClient": true,
-            "distribution": "internal"
+            "distribution": "internal",
+            "credentialsSource": "local",
+            "ios": {
+                "resourceClass": "medium"
+            }
         },
         "preview": {
             "env": {
@@ -38,6 +45,18 @@
             },
             "distribution": "internal",
             "credentialsSource": "local",
+            "ios": {
+                "resourceClass": "medium"
+            }
+        },
+        "thorethy-dev": {
+            "env": {
+                "APP_VARIANT": "development",
+                "EXPO_DEV_BUNDLE_IDENTIFIER": "app.sweetpotato2633.coral4840",
+                "EXPO_DEV_APPLE_TEAM_ID": "GYA6B57RGG",
+                "EXPO_IOS_APP_GROUP_DEV": "group.6827d1df5271d2c4.5"
+            },
+            "distribution": "internal",
             "ios": {
                 "resourceClass": "medium"
             }
