@@ -36,7 +36,8 @@
         "expo-camera",
         {
           "cameraPermission": "SparkyFitness needs access to your camera to scan food barcodes and labels.",
-          "recordAudioAndroid": false
+          "recordAudioAndroid": false,
+          "barcodeScannerEnabled": true
         }
       ],
       [

@@ -145,6 +145,7 @@ export default ({ config }: ConfigContext): Partial<ExpoConfig> => {
     plugins: [
       ...(config.plugins ?? []),
       './plugins/withGlanceAndroidSupport',
+      './plugins/withExpoCameraBarcodeScanning',
       [
         'expo-build-properties',
         {

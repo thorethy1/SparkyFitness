@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import { Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeBottomTabNavigator } from '@bottom-tabs/react-navigation';
@@ -34,7 +34,7 @@ export function NativeTabsLayout({ onAddPress }: { onAddPress?: () => void }) {
         component={SafeDashboard} 
         options={{
           tabBarLabel: 'Dashboard',
-          tabBarIcon: () => ({ systemName: 'house' } as AppleIcon),
+          tabBarIcon: () => ({ sfSymbol: 'house' } as unknown as AppleIcon),
         }}
       />
       <NativeTab.Screen 
@@ -42,7 +42,7 @@ export function NativeTabsLayout({ onAddPress }: { onAddPress?: () => void }) {
         component={SafeDiary} 
         options={{
           tabBarLabel: 'Diary',
-          tabBarIcon: () => ({ systemName: 'doc.text' } as AppleIcon),
+          tabBarIcon: () => ({ sfSymbol: 'doc.text' } as unknown as AppleIcon),
         }}
       />
       <NativeTab.Screen
@@ -50,7 +50,7 @@ export function NativeTabsLayout({ onAddPress }: { onAddPress?: () => void }) {
         component={EmptyScreen}
         options={{
           tabBarLabel: 'Add',
-          tabBarIcon: () => ({ systemName: 'plus' } as AppleIcon),
+          tabBarIcon: () => ({ sfSymbol: 'plus' } as unknown as AppleIcon),
         }}
         listeners={{
           tabPress: (e) => {
@@ -64,7 +64,7 @@ export function NativeTabsLayout({ onAddPress }: { onAddPress?: () => void }) {
         component={SafeLibrary} 
         options={{
           tabBarLabel: 'Library',
-          tabBarIcon: () => ({ systemName: 'book' } as AppleIcon),
+          tabBarIcon: () => ({ sfSymbol: 'book' } as unknown as AppleIcon),
         }}
       />
       <NativeTab.Screen 
@@ -72,7 +72,7 @@ export function NativeTabsLayout({ onAddPress }: { onAddPress?: () => void }) {
         component={SettingsScreen} 
         options={{
           tabBarLabel: 'Settings',
-          tabBarIcon: () => ({ systemName: 'gearshape' } as AppleIcon),
+          tabBarIcon: () => ({ sfSymbol: 'gearshape' } as unknown as AppleIcon),
         }}
       />
     </NativeTab.Navigator>
