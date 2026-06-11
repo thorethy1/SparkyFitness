@@ -64,7 +64,7 @@ function BottomSheetPicker<T extends string | number>({
     '--color-text-muted',
     '--color-surface',
   ]) as [string, string, string];
-  const isDarkMode = theme === 'dark' || theme === 'amoled';
+  const isDarkMode = theme === 'dark' || theme === 'amoled' || theme === 'red';
 
   const normalizedSections = useMemo<PickerSection<T>[]>(() => {
     if (sections && sections.length > 0) {

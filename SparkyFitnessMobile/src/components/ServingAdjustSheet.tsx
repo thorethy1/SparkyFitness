@@ -33,7 +33,7 @@ const ServingAdjustSheet = forwardRef<ServingAdjustSheetRef, ServingAdjustSheetP
     '--color-surface',
     '--color-text-muted',
   ]) as [string, string];
-  const isDarkMode = theme === 'dark' || theme === 'amoled';
+  const isDarkMode = theme === 'dark' || theme === 'amoled' || theme === 'red';
 
   const quantity = parseDecimalInput(quantityText) || 0;
   const totalCalories = entry && entry.serving_size > 0

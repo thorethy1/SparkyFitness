@@ -1,5 +1,6 @@
 import React from 'react';
 import { Platform } from 'react-native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeBottomTabNavigator } from '@bottom-tabs/react-navigation';
 import DashboardScreen from '../screens/DashboardScreen';
@@ -11,7 +12,32 @@ import type { AppleIcon } from 'react-native-bottom-tabs';
 import { withErrorBoundary } from './ScreenErrorBoundary';
 import CustomTabBar from './CustomTabBar';
 
-const EmptyScreen = () => null;
+const NON_ADD_TABS = ['Dashboard', 'Diary', 'Library', 'Settings'] as const;
+type NonAddTabName = typeof NON_ADD_TABS[number];
+
+let lastActiveTab: NonAddTabName = 'Dashboard';
+
+function rememberActiveTab(routeName: string) {
+  if ((NON_ADD_TABS as readonly string[]).includes(routeName)) {
+    lastActiveTab = routeName as NonAddTabName;
+  }
+}
+
+const AddRedirectScreen = () => {
+  const navigation = useNavigation();
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const frame = requestAnimationFrame(() => {
+        navigation.navigate(lastActiveTab as never);
+      });
+
+      return () => cancelAnimationFrame(frame);
+    }, [navigation]),
+  );
+
+  return null;
+};
 
 // Tab screens — no Go Back (tab bar provides navigation)
 const SafeDashboard = withErrorBoundary(DashboardScreen, 'Dashboard');
@@ -28,6 +54,13 @@ export function NativeTabsLayout({ onAddPress }: { onAddPress?: () => void }) {
   return (
     <NativeTab.Navigator
       initialRouteName="Dashboard"
+      screenListeners={{
+        state: (event) => {
+          const state = event.data.state;
+          const route = state.routes[state.index ?? 0];
+          rememberActiveTab(route.name);
+        },
+      }}
     >
       <NativeTab.Screen 
         name="Dashboard" 
@@ -47,7 +80,7 @@ export function NativeTabsLayout({ onAddPress }: { onAddPress?: () => void }) {
       />
       <NativeTab.Screen
         name="Add"
-        component={EmptyScreen}
+        component={AddRedirectScreen}
         options={{
           tabBarLabel: 'Add',
           tabBarIcon: () => ({ sfSymbol: 'plus' } as unknown as AppleIcon),
@@ -84,6 +117,13 @@ export function FallbackTabsLayout() {
   return (
     <FallbackTab.Navigator
       initialRouteName="Dashboard"
+      screenListeners={{
+        state: (event) => {
+          const state = event.data.state;
+          const route = state.routes[state.index ?? 0];
+          rememberActiveTab(route.name);
+        },
+      }}
       screenOptions={{
         headerShown: false,
       }}
@@ -93,7 +133,7 @@ export function FallbackTabsLayout() {
       <FallbackTab.Screen name="Diary" component={SafeDiary} />
       <FallbackTab.Screen
         name="Add"
-        component={EmptyScreen}
+        component={AddRedirectScreen}
         listeners={{
           tabPress: (e) => {
             e.preventDefault();

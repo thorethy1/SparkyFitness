@@ -32,7 +32,7 @@ const CalendarSheet = React.forwardRef<CalendarSheetRef, CalendarSheetProps>(
   ({ selectedDate, onSelectDate }, ref) => {
     const bottomSheetRef = useRef<BottomSheetModal>(null);
     const { theme } = useUniwind();
-    const isDarkMode = theme === 'dark' || theme === 'amoled';
+    const isDarkMode = theme === 'dark' || theme === 'amoled' || theme === 'red';
 
     const [
       surfaceBg,

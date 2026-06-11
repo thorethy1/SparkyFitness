@@ -44,7 +44,7 @@ const AddSheet = React.forwardRef<AddSheetRef, AddSheetProps>(
     const presentFrameRef = useRef<number | null>(null);
     const [showExerciseMenu, setShowExerciseMenu] = useState(false);
     const { theme } = useUniwind();
-    const isDarkMode = theme === 'dark' || theme === 'amoled';
+    const isDarkMode = theme === 'dark' || theme === 'amoled' || theme === 'red';
 
     const [surfaceBg, textMuted, accentPrimary, raisedBg, textSecondary] =
       useCSSVariable([

@@ -215,7 +215,7 @@ function AppContent() {
   ]) as [string, string, string, string, string];
 
   // Determine if we're in dark mode based on current theme
-  const isDarkMode = theme === 'dark' || theme === 'amoled';
+  const isDarkMode = theme === 'dark' || theme === 'amoled' || theme === 'red';
 
   useEffect(() => {
     if (Platform.OS !== 'android') return;

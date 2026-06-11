@@ -49,7 +49,7 @@ const RestPeriodSheet = forwardRef<RestPeriodSheetRef, RestPeriodSheetProps>(
       '--color-surface',
       '--color-text-muted',
     ]) as [string, string, string];
-    const isDarkMode = theme === 'dark' || theme === 'amoled';
+    const isDarkMode = theme === 'dark' || theme === 'amoled' || theme === 'red';
 
     const [currentValue, setCurrentValue] = useState<number>(90);
     const [customOpen, setCustomOpen] = useState(false);
