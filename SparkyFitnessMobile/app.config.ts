@@ -162,9 +162,6 @@ export default ({ config }: ConfigContext): Partial<ExpoConfig> => {
       iosAppGroup: getIosAppGroup(),
       thorethyBundle: getThorethyBundle(),
       thorethyWidgetBundle: getThorethyWidgetBundle(),
-      eas: {
-        projectId: "8682f8ce-75d1-47c9-bb65-0579c19e0918",
-      },
     },
   };
 };
