@@ -2,9 +2,7 @@ import { ConfigPlugin, withDangerousMod } from 'expo/config-plugins';
 import fs from 'fs';
 import path from 'path';
 
-const BARCODE_POD_NAME = 'ExpoCameraBarcodeScanning';
 const ZXING_POD_NAME = 'ZXingObjC';
-const BARCODE_POD_LINE = `pod '${BARCODE_POD_NAME}', :path => '../node_modules/expo-camera/ios'`;
 const ZXING_POD_LINE = `pod '${ZXING_POD_NAME}', :modular_headers => true`;
 
 function hasPod(podfile: string, podName: string): boolean {
@@ -21,7 +19,6 @@ function injectBarcodeScanningPods(podfile: string): string {
 
   const podLinesToInsert = [
     !hasPod(podfile, ZXING_POD_NAME) ? ZXING_POD_LINE : null,
-    !hasPod(podfile, BARCODE_POD_NAME) ? BARCODE_POD_LINE : null,
   ].filter(Boolean);
 
   if (podLinesToInsert.length === 0) {
