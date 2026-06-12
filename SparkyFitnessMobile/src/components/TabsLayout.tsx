@@ -1,5 +1,5 @@
 import React from 'react';
-import { Platform } from 'react-native';
+import { Platform, Pressable } from 'react-native';
 import { CommonActions, useFocusEffect, useNavigation, type NavigationAction } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeBottomTabNavigator } from '@bottom-tabs/react-navigation';
@@ -13,6 +13,7 @@ import type { TabParamList } from '../types/navigation';
 import type { AppleIcon, TabRole } from 'react-native-bottom-tabs';
 import { withErrorBoundary } from './ScreenErrorBoundary';
 import CustomTabBar from './CustomTabBar';
+import Icon from './Icon';
 
 export const NON_ADD_TABS = ['Dashboard', 'Diary', 'Library', 'Settings'] as const;
 export type NonAddTabName = typeof NON_ADD_TABS[number];
@@ -21,7 +22,7 @@ const IOS_SEARCH_ROLE_MIN_VERSION = 26;
 const IOS_NATIVE_HEADER_OPTIONS: NativeStackNavigationOptions = {
   headerShown: true,
   headerLargeTitle: true,
-  headerTransparent: true,
+  headerTransparent: false,
   headerBlurEffect: 'systemMaterial',
   headerLargeTitleShadowVisible: false,
 };
@@ -100,10 +101,32 @@ const DiaryStack = createNativeStackNavigator<DiaryStackParamList>();
 const LibraryStack = createNativeStackNavigator<LibraryStackParamList>();
 const SettingsStack = createNativeStackNavigator<SettingsStackParamList>();
 
+function DashboardSettingsHeaderButton() {
+  const navigation = useNavigation();
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Open settings"
+      onPress={() => navigation.getParent()?.navigate('Settings' as never)}
+      className="p-2 -mr-2"
+    >
+      <Icon name="settings" size={22} color="#007AFF" />
+    </Pressable>
+  );
+}
+
 function DashboardStackScreen() {
   return (
     <DashboardStack.Navigator screenOptions={IOS_NATIVE_HEADER_OPTIONS}>
-      <DashboardStack.Screen name="DashboardRoot" component={SafeDashboard as React.ComponentType} options={{ title: 'Dashboard' }} />
+      <DashboardStack.Screen
+        name="DashboardRoot"
+        component={SafeDashboard as React.ComponentType}
+        options={{
+          title: 'Dashboard',
+          headerRight: () => <DashboardSettingsHeaderButton />,
+        }}
+      />
     </DashboardStack.Navigator>
   );
 }

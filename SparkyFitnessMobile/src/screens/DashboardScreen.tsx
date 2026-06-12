@@ -115,16 +115,6 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
       headerLeft: () => (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Open settings"
-          onPress={() => navigation.navigate('Settings')}
-          className="p-2 -ml-2"
-        >
-          <Icon name="settings" size={22} color={accentColor || '#007AFF'} />
-        </Pressable>
-      ),
-      headerRight: () => (
-        <Pressable
-          accessibilityRole="button"
           accessibilityLabel="Choose dashboard date"
           onPress={openCalendar}
           className="flex-row items-center px-1 py-2"
@@ -240,9 +230,13 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
 
     return (
       <ScrollView
-        contentContainerStyle={{ padding: 16, paddingTop: Platform.OS === 'ios' ? 16 : 0, paddingBottom: 80 + activeWorkoutBarPadding }}
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingBottom: 80 + activeWorkoutBarPadding,
+        }}
         showsVerticalScrollIndicator={false}
         contentInsetAdjustmentBehavior={Platform.OS === 'ios' ? 'automatic' : 'never'}
+        automaticallyAdjustsScrollIndicatorInsets={Platform.OS === 'ios'}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={accentColor || '#3B82F6'} />
         }
