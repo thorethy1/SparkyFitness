@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useRef, useMemo } from 'react';
-import { View, Text, ActivityIndicator, ScrollView, RefreshControl, Pressable } from 'react-native';
+import React, { useState, useCallback, useRef, useMemo, useLayoutEffect } from 'react';
+import { View, Text, ActivityIndicator, ScrollView, RefreshControl, Pressable, Platform } from 'react-native';
 import Button from '../components/ui/Button';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,7 +11,7 @@ import CalorieRingCard from '../components/CalorieRingCard';
 import MacroCard from '../components/MacroCard';
 import DateNavigator from '../components/DateNavigator';
 import CalendarSheet, { type CalendarSheetRef } from '../components/CalendarSheet';
-import { addDays, getTodayDate } from '../utils/dateUtils';
+import { addDays, formatDateLabel, getTodayDate } from '../utils/dateUtils';
 import { weightFromKg } from '../utils/unitConversions';
 import { getNetCarbsValue } from '../utils/nutrientUtils';
 import HydrationGauge from '../components/HydrationGauge';
@@ -106,7 +106,38 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
   const [chartPage, setChartPage] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const activeWorkoutBarPadding = useActiveWorkoutBarPadding();
-  const topSafeAreaStyle = { paddingTop: insets.top };
+  const topSafeAreaStyle = Platform.OS === 'ios' ? undefined : { paddingTop: insets.top };
+
+  useLayoutEffect(() => {
+    if (Platform.OS !== 'ios') return;
+
+    navigation.setOptions({
+      headerLeft: () => (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Open settings"
+          onPress={() => navigation.navigate('Settings')}
+          className="p-2 -ml-2"
+        >
+          <Icon name="settings" size={22} color={accentColor || '#007AFF'} />
+        </Pressable>
+      ),
+      headerRight: () => (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Choose dashboard date"
+          onPress={openCalendar}
+          className="flex-row items-center px-1 py-2"
+        >
+          <Text className="text-base font-semibold" style={{ color: accentColor || '#007AFF' }}>
+            {formatDateLabel(selectedDate)}
+          </Text>
+          <Icon name="chevron-down" size={14} color={accentColor || '#007AFF'} style={{ marginLeft: 4 }} />
+        </Pressable>
+      ),
+    });
+  }, [accentColor, navigation, openCalendar, selectedDate]);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await Promise.all([refetch(), refetchPreferences(), refetchMeasurements(), refetchSteps()]);
@@ -119,9 +150,11 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
     if (!isConnectionLoading && !isConnected) {
       return (
         <View className="flex-1">
-          <View className="px-4 pt-4 pb-5">
-            <Text className="text-2xl font-bold text-text-primary">Dashboard</Text>
-          </View>
+          {Platform.OS !== 'ios' && (
+            <View className="px-4 pt-4 pb-5">
+              <Text className="text-2xl font-bold text-text-primary">Dashboard</Text>
+            </View>
+          )}
           <StatusView
             icon="cloud-offline"
             iconColor="#9CA3AF"
@@ -139,15 +172,17 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
       return (
         <View className="flex-1">
           {!isConnectionLoading && isConnected && (
-            <DateNavigator
-              title="Dashboard"
-              selectedDate={selectedDate}
-              onPreviousDay={goToPreviousDay}
-              onNextDay={goToNextDay}
-              onToday={goToToday}
-              onDatePress={openCalendar}
-              skipTopInset
-            />
+            Platform.OS !== 'ios' ? (
+              <DateNavigator
+                title="Dashboard"
+                selectedDate={selectedDate}
+                onPreviousDay={goToPreviousDay}
+                onNextDay={goToNextDay}
+                onToday={goToToday}
+                onDatePress={openCalendar}
+                skipTopInset
+              />
+            ) : null
           )}
           <View className="flex-1 items-center justify-center p-8 shadow-sm">
             <ActivityIndicator size="large" color="#3B82F6" />
@@ -161,15 +196,17 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
     if (isError || isPreferencesError || isMeasurementsError) {
       return (
         <View className="flex-1">
-          <DateNavigator
-            title="Dashboard"
-            selectedDate={selectedDate}
-            onPreviousDay={goToPreviousDay}
-            onNextDay={goToNextDay}
-            onToday={goToToday}
-            onDatePress={openCalendar}
-            skipTopInset
-          />
+          {Platform.OS !== 'ios' && (
+            <DateNavigator
+              title="Dashboard"
+              selectedDate={selectedDate}
+              onPreviousDay={goToPreviousDay}
+              onNextDay={goToNextDay}
+              onToday={goToToday}
+              onDatePress={openCalendar}
+              skipTopInset
+            />
+          )}
           <View className="flex-1 items-center justify-center p-8 shadow-sm">
             <Icon name="alert-circle" size={64} color="#EF4444" />
             <Text className="text-text-muted text-lg text-center mt-4">
@@ -203,23 +240,25 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
 
     return (
       <ScrollView
-        contentContainerStyle={{ padding: 16, paddingTop: 0, paddingBottom: 80 + activeWorkoutBarPadding }}
+        contentContainerStyle={{ padding: 16, paddingTop: Platform.OS === 'ios' ? 16 : 0, paddingBottom: 80 + activeWorkoutBarPadding }}
         showsVerticalScrollIndicator={false}
-        contentInsetAdjustmentBehavior="never"
+        contentInsetAdjustmentBehavior={Platform.OS === 'ios' ? 'automatic' : 'never'}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={accentColor || '#3B82F6'} />
         }
       >
-        <DateNavigator
-          title="Dashboard"
-          selectedDate={selectedDate}
-          onPreviousDay={goToPreviousDay}
-          onNextDay={goToNextDay}
-          onToday={goToToday}
-          onDatePress={openCalendar}
-          skipTopInset
-          skipHorizontalPadding
-        />
+        {Platform.OS !== 'ios' && (
+          <DateNavigator
+            title="Dashboard"
+            selectedDate={selectedDate}
+            onPreviousDay={goToPreviousDay}
+            onNextDay={goToNextDay}
+            onToday={goToToday}
+            onDatePress={openCalendar}
+            skipTopInset
+            skipHorizontalPadding
+          />
+        )}
         {(summary.foodEntries.length > 0 || summary.exerciseEntries.length > 0 || goal > 0) && (
           <CalorieRingCard
             caloriesConsumed={eaten}

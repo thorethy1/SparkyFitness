@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   Pressable,
   RefreshControl,
+  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
@@ -153,7 +154,7 @@ const LibraryScreen: React.FC<LibraryScreenProps> = ({ navigation }) => {
 
   if (!isConnectionLoading && !isConnected) {
     return (
-      <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
+      <View className="flex-1 bg-background" style={Platform.OS === 'ios' ? undefined : { paddingTop: insets.top }}>
         <StatusView
           icon="cloud-offline"
           iconColor="#9CA3AF"
@@ -168,21 +169,21 @@ const LibraryScreen: React.FC<LibraryScreenProps> = ({ navigation }) => {
 
   if (isConnectionLoading) {
     return (
-      <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
+      <View className="flex-1 bg-background" style={Platform.OS === 'ios' ? undefined : { paddingTop: insets.top }}>
         <StatusView loading title="Loading library..." />
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
+    <View className="flex-1 bg-background" style={Platform.OS === 'ios' ? undefined : { paddingTop: insets.top }}>
       <ScrollView
         contentContainerStyle={{
           padding: 16,
           paddingTop: 16,
           paddingBottom: insets.bottom + activeWorkoutBarPadding + 16,
         }}
-        contentInsetAdjustmentBehavior="never"
+        contentInsetAdjustmentBehavior={Platform.OS === 'ios' ? 'automatic' : 'never'}
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
@@ -191,9 +192,11 @@ const LibraryScreen: React.FC<LibraryScreenProps> = ({ navigation }) => {
           />
         }
       >
-        <View className="mb-6">
-          <Text className="text-2xl font-bold text-text-primary">Library</Text>
-        </View>
+        {Platform.OS !== 'ios' && (
+          <View className="mb-6">
+            <Text className="text-2xl font-bold text-text-primary">Library</Text>
+          </View>
+        )}
 
         <View className="mb-3">
           <Text className="text-lg font-semibold text-text-primary">Create</Text>

@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 import { CommonActions, useFocusEffect, useNavigation, type NavigationAction } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeBottomTabNavigator } from '@bottom-tabs/react-navigation';
+import { createNativeStackNavigator, type NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import { useCSSVariable } from 'uniwind';
 import DashboardScreen from '../screens/DashboardScreen';
 import DiaryScreen from '../screens/DiaryScreen';
@@ -17,6 +18,13 @@ export const NON_ADD_TABS = ['Dashboard', 'Diary', 'Library', 'Settings'] as con
 export type NonAddTabName = typeof NON_ADD_TABS[number];
 const ADD_TAB_ICON: AppleIcon = { sfSymbol: 'plus' };
 const IOS_SEARCH_ROLE_MIN_VERSION = 26;
+const IOS_NATIVE_HEADER_OPTIONS: NativeStackNavigationOptions = {
+  headerShown: true,
+  headerLargeTitle: true,
+  headerTransparent: true,
+  headerBlurEffect: 'systemMaterial',
+  headerLargeTitleShadowVisible: false,
+};
 
 let tabsNavigation: { dispatch: (action: NavigationAction) => void; getState: () => { key?: string } } | null = null;
 
@@ -74,12 +82,55 @@ const AddRedirectScreen = ({ getLastActiveTab }: { getLastActiveTab: () => NonAd
 const SafeDashboard = withErrorBoundary(DashboardScreen, 'Dashboard');
 const SafeDiary = withErrorBoundary(DiaryScreen, 'Diary');
 const SafeLibrary = withErrorBoundary(LibraryScreen, 'Library');
+const SafeSettings = withErrorBoundary(SettingsScreen, 'Settings');
 
 // Native iOS Tab Navigator (iOS 26+ Liquid Glass)
 const NativeTab = createNativeBottomTabNavigator<TabParamList>();
 
 // Fallback Tab Navigator (Android / iOS < 26)
 const FallbackTab = createBottomTabNavigator<TabParamList>();
+
+type DashboardStackParamList = { DashboardRoot: undefined };
+type DiaryStackParamList = { DiaryRoot: undefined };
+type LibraryStackParamList = { LibraryRoot: undefined };
+type SettingsStackParamList = { SettingsRoot: undefined };
+
+const DashboardStack = createNativeStackNavigator<DashboardStackParamList>();
+const DiaryStack = createNativeStackNavigator<DiaryStackParamList>();
+const LibraryStack = createNativeStackNavigator<LibraryStackParamList>();
+const SettingsStack = createNativeStackNavigator<SettingsStackParamList>();
+
+function DashboardStackScreen() {
+  return (
+    <DashboardStack.Navigator screenOptions={IOS_NATIVE_HEADER_OPTIONS}>
+      <DashboardStack.Screen name="DashboardRoot" component={SafeDashboard as React.ComponentType} options={{ title: 'Dashboard' }} />
+    </DashboardStack.Navigator>
+  );
+}
+
+function DiaryStackScreen() {
+  return (
+    <DiaryStack.Navigator screenOptions={IOS_NATIVE_HEADER_OPTIONS}>
+      <DiaryStack.Screen name="DiaryRoot" component={SafeDiary as React.ComponentType} options={{ title: 'Diary' }} />
+    </DiaryStack.Navigator>
+  );
+}
+
+function LibraryStackScreen() {
+  return (
+    <LibraryStack.Navigator screenOptions={IOS_NATIVE_HEADER_OPTIONS}>
+      <LibraryStack.Screen name="LibraryRoot" component={SafeLibrary as React.ComponentType} options={{ title: 'Library' }} />
+    </LibraryStack.Navigator>
+  );
+}
+
+function SettingsStackScreen() {
+  return (
+    <SettingsStack.Navigator screenOptions={IOS_NATIVE_HEADER_OPTIONS}>
+      <SettingsStack.Screen name="SettingsRoot" component={SafeSettings as React.ComponentType} options={{ title: 'Settings' }} />
+    </SettingsStack.Navigator>
+  );
+}
 
 export function NativeTabsLayout({
   onAddPress,
@@ -121,7 +172,7 @@ export function NativeTabsLayout({
     >
       <NativeTab.Screen 
         name="Dashboard" 
-        component={SafeDashboard} 
+        component={DashboardStackScreen} 
         options={{
           tabBarLabel: 'Dashboard',
           tabBarIcon: () => ({ sfSymbol: 'house' } as unknown as AppleIcon),
@@ -129,7 +180,7 @@ export function NativeTabsLayout({
       />
       <NativeTab.Screen 
         name="Diary" 
-        component={SafeDiary} 
+        component={DiaryStackScreen} 
         options={{
           tabBarLabel: 'Diary',
           tabBarIcon: () => ({ sfSymbol: 'doc.text' } as unknown as AppleIcon),
@@ -153,7 +204,7 @@ export function NativeTabsLayout({
       />
       <NativeTab.Screen 
         name="Library" 
-        component={SafeLibrary} 
+        component={LibraryStackScreen} 
         options={{
           tabBarLabel: 'Library',
           tabBarIcon: () => ({ sfSymbol: 'book' } as unknown as AppleIcon),
@@ -161,7 +212,7 @@ export function NativeTabsLayout({
       />
       <NativeTab.Screen 
         name="Settings" 
-        component={SettingsScreen} 
+        component={SettingsStackScreen} 
         options={{
           tabBarLabel: 'Settings',
           tabBarIcon: () => ({ sfSymbol: 'gearshape' } as unknown as AppleIcon),

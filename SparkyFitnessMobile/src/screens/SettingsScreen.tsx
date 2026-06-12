@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator, Platform } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -114,12 +114,17 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
   };
 
   return (
-    <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 80 + activeWorkoutBarPadding }} contentInsetAdjustmentBehavior="never">
+    <View className="flex-1 bg-background" style={Platform.OS === 'ios' ? undefined : { paddingTop: insets.top }}>
+      <ScrollView
+        contentContainerStyle={{ paddingTop: Platform.OS === 'ios' ? 16 : 0, paddingBottom: 80 + activeWorkoutBarPadding }}
+        contentInsetAdjustmentBehavior={Platform.OS === 'ios' ? 'automatic' : 'never'}
+      >
         <View className="flex-1 p-4">
-          <View className="mb-6">
-            <Text className="text-2xl font-bold text-text-primary">Settings</Text>
-          </View>
+          {Platform.OS !== 'ios' && (
+            <View className="mb-6">
+              <Text className="text-2xl font-bold text-text-primary">Settings</Text>
+            </View>
+          )}
 
           <SettingsRow
             icon="server"
