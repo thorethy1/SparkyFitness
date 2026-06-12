@@ -1,26 +1,59 @@
 import React from 'react';
 import { Platform } from 'react-native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { CommonActions, useFocusEffect, useNavigation, type NavigationAction } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeBottomTabNavigator } from '@bottom-tabs/react-navigation';
+import { useCSSVariable } from 'uniwind';
 import DashboardScreen from '../screens/DashboardScreen';
 import DiaryScreen from '../screens/DiaryScreen';
 import LibraryScreen from '../screens/LibraryScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import type { TabParamList } from '../types/navigation';
-import type { AppleIcon } from 'react-native-bottom-tabs';
+import type { AppleIcon, TabRole } from 'react-native-bottom-tabs';
 import { withErrorBoundary } from './ScreenErrorBoundary';
 import CustomTabBar from './CustomTabBar';
 
 const NON_ADD_TABS = ['Dashboard', 'Diary', 'Library', 'Settings'] as const;
 type NonAddTabName = typeof NON_ADD_TABS[number];
+const ADD_TAB_ICON: AppleIcon = { sfSymbol: 'plus' };
+const IOS_SEARCH_ROLE_MIN_VERSION = 26;
 
 let lastActiveTab: NonAddTabName = 'Dashboard';
+let tabsNavigation: { dispatch: (action: NavigationAction) => void; getState: () => { key?: string } } | null = null;
 
 function rememberActiveTab(routeName: string) {
   if ((NON_ADD_TABS as readonly string[]).includes(routeName)) {
     lastActiveTab = routeName as NonAddTabName;
   }
+}
+
+function getIOSMajorVersion() {
+  if (Platform.OS !== 'ios') return null;
+
+  const version = Platform.Version;
+  if (typeof version === 'number') return Math.trunc(version);
+
+  const major = Number.parseInt(version, 10);
+  return Number.isFinite(major) ? major : null;
+}
+
+function supportsSeparateAddTabButton() {
+  const majorVersion = getIOSMajorVersion();
+  return majorVersion !== null && majorVersion >= IOS_SEARCH_ROLE_MIN_VERSION;
+}
+
+function resolveColor(value: string, fallback: string) {
+  return value && value !== 'unset' ? value : fallback;
+}
+
+export function navigateToLastActiveTab() {
+  if (!tabsNavigation) return false;
+
+  tabsNavigation.dispatch({
+    ...CommonActions.navigate(lastActiveTab),
+    target: tabsNavigation.getState().key,
+  });
+  return true;
 }
 
 const AddRedirectScreen = () => {
@@ -51,15 +84,32 @@ const NativeTab = createNativeBottomTabNavigator<TabParamList>();
 const FallbackTab = createBottomTabNavigator<TabParamList>();
 
 export function NativeTabsLayout({ onAddPress }: { onAddPress?: () => void }) {
+  const [primary, tabActive, tabInactive] = useCSSVariable([
+    '--color-accent-primary',
+    '--color-tab-active',
+    '--color-tab-inactive',
+  ]) as [string, string, string];
+  const addTabRole: TabRole | undefined = supportsSeparateAddTabButton()
+    ? 'search'
+    : undefined;
+  const activeTintColor = resolveColor(tabActive, resolveColor(primary, '#0A84FF'));
+  const inactiveTintColor = resolveColor(tabInactive, '#8E8E93');
+
   return (
     <NativeTab.Navigator
       initialRouteName="Dashboard"
-      screenListeners={{
-        state: (event) => {
-          const state = event.data.state;
-          const route = state.routes[state.index ?? 0];
-          rememberActiveTab(route.name);
-        },
+      tabBarActiveTintColor={activeTintColor}
+      tabBarInactiveTintColor={inactiveTintColor}
+      screenListeners={({ navigation }) => {
+        tabsNavigation = navigation;
+
+        return {
+          state: (event) => {
+            const state = event.data.state;
+            const route = state.routes[state.index ?? 0];
+            rememberActiveTab(route.name);
+          },
+        };
       }}
     >
       <NativeTab.Screen 
@@ -83,7 +133,9 @@ export function NativeTabsLayout({ onAddPress }: { onAddPress?: () => void }) {
         component={AddRedirectScreen}
         options={{
           tabBarLabel: 'Add',
-          tabBarIcon: () => ({ sfSymbol: 'plus' } as unknown as AppleIcon),
+          tabBarIcon: () => ADD_TAB_ICON,
+          role: addTabRole,
+          preventsDefault: true,
         }}
         listeners={{
           tabPress: (e) => {
@@ -117,12 +169,16 @@ export function FallbackTabsLayout() {
   return (
     <FallbackTab.Navigator
       initialRouteName="Dashboard"
-      screenListeners={{
-        state: (event) => {
-          const state = event.data.state;
-          const route = state.routes[state.index ?? 0];
-          rememberActiveTab(route.name);
-        },
+      screenListeners={({ navigation }) => {
+        tabsNavigation = navigation;
+
+        return {
+          state: (event) => {
+            const state = event.data.state;
+            const route = state.routes[state.index ?? 0];
+            rememberActiveTab(route.name);
+          },
+        };
       }}
       screenOptions={{
         headerShown: false,

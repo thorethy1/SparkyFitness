@@ -94,19 +94,14 @@ import { addLog, initLogService } from './src/services/LogService';
 import { initNotifications } from './src/services/notifications';
 import { ensureTimezoneBootstrapped } from './src/services/api/preferencesApi';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createNativeBottomTabNavigator } from '@bottom-tabs/react-navigation';
 import Toast from 'react-native-toast-message';
 import type { RootStackParamList, TabParamList } from './src/types/navigation';
-import type { AppleIcon } from 'react-native-bottom-tabs';
 import AddSheet, { addSheetRef } from './src/components/AddSheet';
 import { toastConfig } from './src/components/ui/toastConfig';
-import CustomTabBar from './src/components/CustomTabBar';
-import { TabsLayout } from './src/components/TabsLayout';
+import { navigateToLastActiveTab, TabsLayout } from './src/components/TabsLayout';
 import ActiveWorkoutBar, { navigationRef as rootNavigationRef } from './src/components/ActiveWorkoutBar';
 import WhatsNewBanner from './src/components/WhatsNewBanner';
 import { withErrorBoundary } from './src/components/ScreenErrorBoundary';
-import { isLiquidGlassAvailable } from 'expo-glass-effect';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -201,9 +196,18 @@ function AppContent() {
   const foregroundAutoSyncWindowRef = useRef(false);
   const backgroundEnteredAtRef = useRef<number | null>(null);
   const wasInBackgroundRef = useRef(false);
+  const addSheetDismissNavigationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const setForegroundAutoSyncWindowState = useCallback((isOpen: boolean) => {
     foregroundAutoSyncWindowRef.current = isOpen;
     setForegroundAutoSyncWindowOpen(isOpen);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (addSheetDismissNavigationTimeoutRef.current != null) {
+        clearTimeout(addSheetDismissNavigationTimeoutRef.current);
+      }
+    };
   }, []);
 
   const [primary, chrome, chromeBorder, bgPrimary, textPrimary] = useCSSVariable([
@@ -327,6 +331,34 @@ const handleAddFood = useCallback(async () => {
 
     syncMutation.mutate({ timeRange, healthMetricStates });
   }, [syncMutation]);
+
+  const handleAddSheetDismissWithoutAction = useCallback(() => {
+    if (!rootNavigationRef.isReady()) return;
+
+    const navigateBackToPreviousTab = () => {
+      if (navigateToLastActiveTab()) return;
+      if (!rootNavigationRef.isReady()) return;
+
+      rootNavigationRef.dispatch(
+        CommonActions.navigate('Tabs', {
+          screen: 'Dashboard',
+        }),
+      );
+    };
+
+    if (addSheetDismissNavigationTimeoutRef.current != null) {
+      clearTimeout(addSheetDismissNavigationTimeoutRef.current);
+      addSheetDismissNavigationTimeoutRef.current = null;
+    }
+
+    navigateBackToPreviousTab();
+
+    requestAnimationFrame(navigateBackToPreviousTab);
+    addSheetDismissNavigationTimeoutRef.current = setTimeout(() => {
+      addSheetDismissNavigationTimeoutRef.current = null;
+      navigateBackToPreviousTab();
+    }, 150);
+  }, []);
 
   const triggerAutoSync = useCallback(async (configId: string, release: () => void) => {
     let committed = false;
@@ -911,7 +943,7 @@ const handleAddFood = useCallback(async () => {
             }}
           />
         </Stack.Navigator>
-        <AddSheet ref={addSheetRef} onAddFood={handleAddFood} onAddWorkout={handleAddWorkout} onAddActivity={handleAddActivity} onAddFromPreset={handleAddFromPreset} onSyncHealthData={handleSyncHealthData} onBarcodeScan={handleBarcodeScan} onAddMeasurements={handleAddMeasurements} />
+        <AddSheet ref={addSheetRef} onAddFood={handleAddFood} onAddWorkout={handleAddWorkout} onAddActivity={handleAddActivity} onAddFromPreset={handleAddFromPreset} onSyncHealthData={handleSyncHealthData} onBarcodeScan={handleBarcodeScan} onAddMeasurements={handleAddMeasurements} onDismissWithoutAction={handleAddSheetDismissWithoutAction} />
         <ReauthModal
           visible={showReauthModal}
           expiredConfigId={expiredConfigId}
