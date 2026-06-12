@@ -13,19 +13,17 @@ import type { AppleIcon, TabRole } from 'react-native-bottom-tabs';
 import { withErrorBoundary } from './ScreenErrorBoundary';
 import CustomTabBar from './CustomTabBar';
 
-const NON_ADD_TABS = ['Dashboard', 'Diary', 'Library', 'Settings'] as const;
-type NonAddTabName = typeof NON_ADD_TABS[number];
+export const NON_ADD_TABS = ['Dashboard', 'Diary', 'Library', 'Settings'] as const;
+export type NonAddTabName = typeof NON_ADD_TABS[number];
 const ADD_TAB_ICON: AppleIcon = { sfSymbol: 'plus' };
 const IOS_SEARCH_ROLE_MIN_VERSION = 26;
 
-let lastActiveTab: NonAddTabName = 'Dashboard';
 let tabsNavigation: { dispatch: (action: NavigationAction) => void; getState: () => { key?: string } } | null = null;
 
-function rememberActiveTab(routeName: string) {
-  if ((NON_ADD_TABS as readonly string[]).includes(routeName)) {
-    lastActiveTab = routeName as NonAddTabName;
-  }
-}
+type TabTrackingProps = {
+  rememberActiveTab: (routeName: string) => void;
+  getLastActiveTab: () => NonAddTabName;
+};
 
 function getIOSMajorVersion() {
   if (Platform.OS !== 'ios') return null;
@@ -46,27 +44,27 @@ function resolveColor(value: string, fallback: string) {
   return value && value !== 'unset' ? value : fallback;
 }
 
-export function navigateToLastActiveTab() {
+export function navigateToLastActiveTab(targetTab: NonAddTabName) {
   if (!tabsNavigation) return false;
 
   tabsNavigation.dispatch({
-    ...CommonActions.navigate(lastActiveTab),
+    ...CommonActions.navigate(targetTab),
     target: tabsNavigation.getState().key,
   });
   return true;
 }
 
-const AddRedirectScreen = () => {
+const AddRedirectScreen = ({ getLastActiveTab }: { getLastActiveTab: () => NonAddTabName }) => {
   const navigation = useNavigation();
 
   useFocusEffect(
     React.useCallback(() => {
       const frame = requestAnimationFrame(() => {
-        navigation.navigate(lastActiveTab as never);
+        navigation.navigate(getLastActiveTab() as never);
       });
 
       return () => cancelAnimationFrame(frame);
-    }, [navigation]),
+    }, [getLastActiveTab, navigation]),
   );
 
   return null;
@@ -83,7 +81,11 @@ const NativeTab = createNativeBottomTabNavigator<TabParamList>();
 // Fallback Tab Navigator (Android / iOS < 26)
 const FallbackTab = createBottomTabNavigator<TabParamList>();
 
-export function NativeTabsLayout({ onAddPress }: { onAddPress?: () => void }) {
+export function NativeTabsLayout({
+  onAddPress,
+  rememberActiveTab,
+  getLastActiveTab,
+}: { onAddPress?: () => void } & TabTrackingProps) {
   const [primary, tabActive, tabInactive] = useCSSVariable([
     '--color-accent-primary',
     '--color-tab-active',
@@ -94,6 +96,10 @@ export function NativeTabsLayout({ onAddPress }: { onAddPress?: () => void }) {
     : undefined;
   const activeTintColor = resolveColor(tabActive, resolveColor(primary, '#0A84FF'));
   const inactiveTintColor = resolveColor(tabInactive, '#8E8E93');
+  const AddScreen = React.useCallback(
+    () => <AddRedirectScreen getLastActiveTab={getLastActiveTab} />,
+    [getLastActiveTab],
+  );
 
   return (
     <NativeTab.Navigator
@@ -105,9 +111,10 @@ export function NativeTabsLayout({ onAddPress }: { onAddPress?: () => void }) {
 
         return {
           state: (event) => {
-            const state = event.data.state;
+            const state = event.data?.state;
+            if (!state?.routes) return;
             const route = state.routes[state.index ?? 0];
-            rememberActiveTab(route.name);
+            if (route) rememberActiveTab(route.name);
           },
         };
       }}
@@ -130,7 +137,7 @@ export function NativeTabsLayout({ onAddPress }: { onAddPress?: () => void }) {
       />
       <NativeTab.Screen
         name="Add"
-        component={AddRedirectScreen}
+        component={AddScreen}
         options={{
           tabBarLabel: 'Add',
           tabBarIcon: () => ADD_TAB_ICON,
@@ -164,7 +171,12 @@ export function NativeTabsLayout({ onAddPress }: { onAddPress?: () => void }) {
   );
 }
 
-export function FallbackTabsLayout() {
+export function FallbackTabsLayout({ rememberActiveTab, getLastActiveTab }: TabTrackingProps) {
+  const AddScreen = React.useCallback(
+    () => <AddRedirectScreen getLastActiveTab={getLastActiveTab} />,
+    [getLastActiveTab],
+  );
+
   // The AddSheet is rendered in App.tsx with proper props
   return (
     <FallbackTab.Navigator
@@ -174,9 +186,10 @@ export function FallbackTabsLayout() {
 
         return {
           state: (event) => {
-            const state = event.data.state;
+            const state = event.data?.state;
+            if (!state?.routes) return;
             const route = state.routes[state.index ?? 0];
-            rememberActiveTab(route.name);
+            if (route) rememberActiveTab(route.name);
           },
         };
       }}
@@ -189,7 +202,7 @@ export function FallbackTabsLayout() {
       <FallbackTab.Screen name="Diary" component={SafeDiary} />
       <FallbackTab.Screen
         name="Add"
-        component={AddRedirectScreen}
+        component={AddScreen}
         listeners={{
           tabPress: (e) => {
             e.preventDefault();
@@ -204,9 +217,24 @@ export function FallbackTabsLayout() {
 }
 
 // Main export - uses native tabs on iOS, fallback on Android
-export function TabsLayout({ onAddPress }: { onAddPress?: () => void }) {
+export function TabsLayout({
+  onAddPress,
+  rememberActiveTab,
+  getLastActiveTab,
+}: { onAddPress?: () => void } & TabTrackingProps) {
   if (Platform.OS === 'ios') {
-    return <NativeTabsLayout onAddPress={onAddPress} />;
+    return (
+      <NativeTabsLayout
+        onAddPress={onAddPress}
+        rememberActiveTab={rememberActiveTab}
+        getLastActiveTab={getLastActiveTab}
+      />
+    );
   }
-  return <FallbackTabsLayout />;
+  return (
+    <FallbackTabsLayout
+      rememberActiveTab={rememberActiveTab}
+      getLastActiveTab={getLastActiveTab}
+    />
+  );
 }

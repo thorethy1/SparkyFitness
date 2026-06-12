@@ -98,7 +98,7 @@ import Toast from 'react-native-toast-message';
 import type { RootStackParamList, TabParamList } from './src/types/navigation';
 import AddSheet, { addSheetRef } from './src/components/AddSheet';
 import { toastConfig } from './src/components/ui/toastConfig';
-import { navigateToLastActiveTab, TabsLayout } from './src/components/TabsLayout';
+import { navigateToLastActiveTab, NON_ADD_TABS, TabsLayout, type NonAddTabName } from './src/components/TabsLayout';
 import ActiveWorkoutBar, { navigationRef as rootNavigationRef } from './src/components/ActiveWorkoutBar';
 import WhatsNewBanner from './src/components/WhatsNewBanner';
 import { withErrorBoundary } from './src/components/ScreenErrorBoundary';
@@ -197,6 +197,13 @@ function AppContent() {
   const backgroundEnteredAtRef = useRef<number | null>(null);
   const wasInBackgroundRef = useRef(false);
   const addSheetDismissNavigationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastActiveTabRef = useRef<NonAddTabName>('Dashboard');
+  const rememberActiveTab = useCallback((routeName: string) => {
+    if ((NON_ADD_TABS as readonly string[]).includes(routeName)) {
+      lastActiveTabRef.current = routeName as NonAddTabName;
+    }
+  }, []);
+  const getLastActiveTab = useCallback(() => lastActiveTabRef.current, []);
   const setForegroundAutoSyncWindowState = useCallback((isOpen: boolean) => {
     foregroundAutoSyncWindowRef.current = isOpen;
     setForegroundAutoSyncWindowOpen(isOpen);
@@ -336,7 +343,7 @@ const handleAddFood = useCallback(async () => {
     if (!rootNavigationRef.isReady()) return;
 
     const navigateBackToPreviousTab = () => {
-      if (navigateToLastActiveTab()) return;
+      if (navigateToLastActiveTab(lastActiveTabRef.current)) return;
       if (!rootNavigationRef.isReady()) return;
 
       rootNavigationRef.dispatch(
@@ -638,7 +645,11 @@ const handleAddFood = useCallback(async () => {
               <>
                 <WhatsNewBanner />
                 <ActiveWorkoutBar variant="embedded" />
-                <TabsLayout onAddPress={() => addSheetRef.current?.present()} />
+                <TabsLayout
+                  onAddPress={() => addSheetRef.current?.present()}
+                  rememberActiveTab={rememberActiveTab}
+                  getLastActiveTab={getLastActiveTab}
+                />
               </>
             )}
           </Stack.Screen>
