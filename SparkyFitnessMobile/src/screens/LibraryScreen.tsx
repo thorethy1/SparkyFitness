@@ -178,11 +178,13 @@ const LibraryScreen: React.FC<LibraryScreenProps> = ({ navigation }) => {
   return (
     <View className="flex-1 bg-background" style={Platform.OS === 'ios' ? undefined : { paddingTop: insets.top }}>
       <ScrollView
+        className="flex-1"
         contentContainerStyle={{
           paddingHorizontal: 16,
           ...(Platform.OS !== 'ios' ? { paddingTop: 16 } : null),
           paddingBottom: insets.bottom + activeWorkoutBarPadding + 16,
         }}
+        scrollEventThrottle={16}
         contentInsetAdjustmentBehavior={Platform.OS === 'ios' ? 'automatic' : 'never'}
         automaticallyAdjustsScrollIndicatorInsets={Platform.OS === 'ios'}
         refreshControl={

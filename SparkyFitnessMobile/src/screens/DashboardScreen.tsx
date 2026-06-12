@@ -230,11 +230,13 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
 
     return (
       <ScrollView
+        className="flex-1"
         contentContainerStyle={{
           paddingHorizontal: 16,
           paddingBottom: 80 + activeWorkoutBarPadding,
         }}
         showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
         contentInsetAdjustmentBehavior={Platform.OS === 'ios' ? 'automatic' : 'never'}
         automaticallyAdjustsScrollIndicatorInsets={Platform.OS === 'ios'}
         refreshControl={

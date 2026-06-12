@@ -25,6 +25,7 @@ const IOS_NATIVE_HEADER_OPTIONS: NativeStackNavigationOptions = {
   headerTransparent: false,
   headerBlurEffect: 'systemMaterial',
   headerLargeTitleShadowVisible: false,
+  animation: 'default',
 };
 
 let tabsNavigation: { dispatch: (action: NavigationAction) => void; getState: () => { key?: string } } | null = null;

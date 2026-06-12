@@ -116,14 +116,16 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
   return (
     <View className="flex-1 bg-background" style={Platform.OS === 'ios' ? undefined : { paddingTop: insets.top }}>
       <ScrollView
+        className="flex-1"
         contentContainerStyle={{
           ...(Platform.OS !== 'ios' ? { paddingTop: 0 } : null),
           paddingBottom: 80 + activeWorkoutBarPadding,
         }}
+        scrollEventThrottle={16}
         contentInsetAdjustmentBehavior={Platform.OS === 'ios' ? 'automatic' : 'never'}
         automaticallyAdjustsScrollIndicatorInsets={Platform.OS === 'ios'}
       >
-        <View className={Platform.OS === 'ios' ? 'flex-1 px-4 pb-4' : 'flex-1 p-4'}>
+        <View className={Platform.OS === 'ios' ? 'px-4 pb-4' : 'flex-1 p-4'}>
           {Platform.OS !== 'ios' && (
             <View className="mb-6">
               <Text className="text-2xl font-bold text-text-primary">Settings</Text>
