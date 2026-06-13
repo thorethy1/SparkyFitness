@@ -5,6 +5,8 @@ import * as SplashScreen from 'expo-splash-screen';
 import * as NavigationBar from 'expo-navigation-bar';
 import {
   CommonActions,
+  DarkTheme,
+  DefaultTheme,
   NavigationContainer,
   type LinkingOptions,
   type NavigationProp,
@@ -217,13 +219,12 @@ function AppContent() {
     };
   }, []);
 
-  const [primary, chrome, chromeBorder, bgPrimary, textPrimary] = useCSSVariable([
+  const [primary, chromeBorder, bgPrimary, textPrimary] = useCSSVariable([
     '--color-accent-primary',
-    '--color-chrome',
     '--color-chrome-border',
     '--color-background',
     '--color-text-primary',
-  ]) as [string, string, string, string, string];
+  ]) as [string, string, string, string];
 
   // Determine if we're in dark mode based on current theme
   const isDarkMode = theme === 'dark' || theme === 'amoled' || theme === 'red';
@@ -239,23 +240,32 @@ function AppContent() {
     }
   }, [isDarkMode]);
 
-  const navigationTheme = useMemo<Theme>(() => ({
-    dark: isDarkMode,
-    colors: {
-      primary: primary,
-      background: bgPrimary,
-      card: chrome,
-      text: textPrimary,
-      border: chromeBorder,
-      notification: primary,
-    },
-    fonts: {
-      regular: { fontFamily: 'System', fontWeight: '400' },
-      medium: { fontFamily: 'System', fontWeight: '500' },
-      bold: { fontFamily: 'System', fontWeight: '600' },
-      heavy: { fontFamily: 'System', fontWeight: '700' },
-    },
-  }), [isDarkMode, primary, bgPrimary, chrome, textPrimary, chromeBorder]);
+  const navigationTheme = useMemo<Theme>(() => {
+    const baseTheme = isDarkMode ? DarkTheme : DefaultTheme;
+
+    return {
+      ...baseTheme,
+      dark: isDarkMode,
+      colors: {
+        ...baseTheme.colors,
+        primary,
+        background: bgPrimary,
+        // Native iOS 26 Liquid Glass reads the navigation card color during
+        // tab/header transitions. Keep it solid and in-sync with the app
+        // background to avoid light-mode flashes/flicker in dark themes.
+        card: bgPrimary,
+        text: textPrimary,
+        border: chromeBorder,
+        notification: primary,
+      },
+      fonts: {
+        regular: { fontFamily: 'System', fontWeight: '400' },
+        medium: { fontFamily: 'System', fontWeight: '500' },
+        bold: { fontFamily: 'System', fontWeight: '600' },
+        heavy: { fontFamily: 'System', fontWeight: '700' },
+      },
+    };
+  }, [isDarkMode, primary, bgPrimary, textPrimary, chromeBorder]);
 
   const getActiveDiaryDate = useCallback(() => {
     const navigation = navigationRef.current;
@@ -634,7 +644,14 @@ const handleAddFood = useCallback(async () => {
       <SafeAreaProvider>
         <UniwindInsetsBridge />
         <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
-        <Stack.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: bgPrimary } }} initialRouteName={initialRoute}>
+        <Stack.Navigator
+          screenOptions={{
+            headerShown: false,
+            animation: 'default',
+            contentStyle: { backgroundColor: bgPrimary },
+          }}
+          initialRouteName={initialRoute}
+        >
           <Stack.Screen
             name="Onboarding"
             component={SafeOnboarding}

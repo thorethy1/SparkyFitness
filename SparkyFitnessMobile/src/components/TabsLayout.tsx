@@ -1,9 +1,9 @@
 import React from 'react';
-import { Platform, Pressable } from 'react-native';
+import { Platform } from 'react-native';
 import { CommonActions, useFocusEffect, useNavigation, type NavigationAction } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeBottomTabNavigator } from '@bottom-tabs/react-navigation';
-import { createNativeStackNavigator, type NativeStackNavigationOptions } from '@react-navigation/native-stack';
+import { createNativeStackNavigator, type NativeStackHeaderItem, type NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import { useCSSVariable } from 'uniwind';
 import DashboardScreen from '../screens/DashboardScreen';
 import DiaryScreen from '../screens/DiaryScreen';
@@ -13,7 +13,7 @@ import type { TabParamList } from '../types/navigation';
 import type { AppleIcon, TabRole } from 'react-native-bottom-tabs';
 import { withErrorBoundary } from './ScreenErrorBoundary';
 import CustomTabBar from './CustomTabBar';
-import Icon from './Icon';
+import { formatDateLabel } from '../utils/dateUtils';
 
 export const NON_ADD_TABS = ['Dashboard', 'Diary', 'Library', 'Settings'] as const;
 export type NonAddTabName = typeof NON_ADD_TABS[number];
@@ -21,10 +21,17 @@ const ADD_TAB_ICON: AppleIcon = { sfSymbol: 'plus' };
 const IOS_SEARCH_ROLE_MIN_VERSION = 26;
 const IOS_NATIVE_HEADER_OPTIONS: NativeStackNavigationOptions = {
   headerShown: true,
-  headerLargeTitle: true,
-  headerTransparent: false,
-  headerBlurEffect: 'systemMaterial',
+  headerLargeTitleEnabled: true,
   headerLargeTitleShadowVisible: false,
+  headerTintColor: '#FFFFFF',
+  headerTitleStyle: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  headerLargeTitleStyle: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
   animation: 'default',
 };
 
@@ -92,8 +99,22 @@ const NativeTab = createNativeBottomTabNavigator<TabParamList>();
 // Fallback Tab Navigator (Android / iOS < 26)
 const FallbackTab = createBottomTabNavigator<TabParamList>();
 
-type DashboardStackParamList = { DashboardRoot: undefined };
-type DiaryStackParamList = { DiaryRoot: undefined };
+type DashboardStackParamList = {
+  DashboardRoot: {
+    selectedDate?: string;
+    onPreviousDate?: () => void;
+    onDatePress?: () => void;
+    onNextDate?: () => void;
+  } | undefined;
+};
+type DiaryStackParamList = {
+  DiaryRoot: {
+    selectedDate?: string;
+    onPreviousDate?: () => void;
+    onDatePress?: () => void;
+    onNextDate?: () => void;
+  } | undefined;
+};
 type LibraryStackParamList = { LibraryRoot: undefined };
 type SettingsStackParamList = { SettingsRoot: undefined };
 
@@ -102,40 +123,109 @@ const DiaryStack = createNativeStackNavigator<DiaryStackParamList>();
 const LibraryStack = createNativeStackNavigator<LibraryStackParamList>();
 const SettingsStack = createNativeStackNavigator<SettingsStackParamList>();
 
-function DashboardSettingsHeaderButton() {
-  const navigation = useNavigation();
+function createDateHeaderItems({
+  selectedDate,
+  onPreviousDate,
+  onPress,
+  onNextDate,
+  tintColor,
+  accessibilityLabel,
+}: {
+  selectedDate?: string;
+  onPreviousDate?: () => void;
+  onPress?: () => void;
+  onNextDate?: () => void;
+  tintColor: string;
+  accessibilityLabel: string;
+}): NativeStackHeaderItem[] {
+  if (!selectedDate || !onPress) return [];
 
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel="Open settings"
-      onPress={() => navigation.getParent()?.navigate('Settings' as never)}
-      className="p-2 -mr-2"
-    >
-      <Icon name="settings" size={22} color="#007AFF" />
-    </Pressable>
-  );
+  return [
+    {
+      type: 'button',
+      label: 'Previous day',
+      icon: { type: 'sfSymbol', name: 'chevron.left' },
+      onPress: onPreviousDate ?? (() => {}),
+      tintColor,
+      accessibilityLabel: `${accessibilityLabel}: previous day`,
+      identifier: 'date-picker-previous',
+      hidesSharedBackground: true,
+      disabled: !onPreviousDate,
+    },
+    {
+      type: 'button',
+      // Keep this label-only: UIBarButtonItem often prioritizes the SF Symbol
+      // and hides text when both label and icon are supplied on iOS 26.
+      label: `${formatDateLabel(selectedDate)} ▾`,
+      onPress,
+      tintColor,
+      labelStyle: { fontWeight: '600', color: tintColor },
+      accessibilityLabel,
+      identifier: 'date-picker',
+      hidesSharedBackground: true,
+    },
+    {
+      type: 'button',
+      label: 'Next day',
+      icon: { type: 'sfSymbol', name: 'chevron.right' },
+      onPress: onNextDate ?? (() => {}),
+      tintColor,
+      accessibilityLabel: `${accessibilityLabel}: next day`,
+      identifier: 'date-picker-next',
+      hidesSharedBackground: true,
+      disabled: !onNextDate,
+    },
+  ];
 }
 
 function DashboardStackScreen() {
+  const accentColor = resolveColor(useCSSVariable('--color-accent-primary') as string, '#007AFF');
+
   return (
     <DashboardStack.Navigator screenOptions={IOS_NATIVE_HEADER_OPTIONS}>
       <DashboardStack.Screen
         name="DashboardRoot"
         component={SafeDashboard as React.ComponentType}
-        options={{
+        options={({ route }) => ({
           title: 'Dashboard',
-          headerRight: () => <DashboardSettingsHeaderButton />,
-        }}
+          unstable_headerRightItems: Platform.OS === 'ios'
+            ? () => createDateHeaderItems({
+                selectedDate: route.params?.selectedDate,
+                onPreviousDate: route.params?.onPreviousDate,
+                onPress: route.params?.onDatePress,
+                onNextDate: route.params?.onNextDate,
+                tintColor: accentColor,
+                accessibilityLabel: 'Choose dashboard date',
+              })
+            : undefined,
+        })}
       />
     </DashboardStack.Navigator>
   );
 }
 
 function DiaryStackScreen() {
+  const accentColor = resolveColor(useCSSVariable('--color-accent-primary') as string, '#007AFF');
+
   return (
     <DiaryStack.Navigator screenOptions={IOS_NATIVE_HEADER_OPTIONS}>
-      <DiaryStack.Screen name="DiaryRoot" component={SafeDiary as React.ComponentType} options={{ title: 'Diary' }} />
+      <DiaryStack.Screen
+        name="DiaryRoot"
+        component={SafeDiary as React.ComponentType}
+        options={({ route }) => ({
+          title: 'Diary',
+          unstable_headerRightItems: Platform.OS === 'ios'
+            ? () => createDateHeaderItems({
+                selectedDate: route.params?.selectedDate,
+                onPreviousDate: route.params?.onPreviousDate,
+                onPress: route.params?.onDatePress,
+                onNextDate: route.params?.onNextDate,
+                tintColor: accentColor,
+                accessibilityLabel: 'Choose diary date',
+              })
+            : undefined,
+        })}
+      />
     </DiaryStack.Navigator>
   );
 }

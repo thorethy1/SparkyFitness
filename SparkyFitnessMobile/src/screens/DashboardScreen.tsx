@@ -11,7 +11,7 @@ import CalorieRingCard from '../components/CalorieRingCard';
 import MacroCard from '../components/MacroCard';
 import DateNavigator from '../components/DateNavigator';
 import CalendarSheet, { type CalendarSheetRef } from '../components/CalendarSheet';
-import { addDays, formatDateLabel, getTodayDate } from '../utils/dateUtils';
+import { addDays, getTodayDate } from '../utils/dateUtils';
 import { weightFromKg } from '../utils/unitConversions';
 import { getNetCarbsValue } from '../utils/nutrientUtils';
 import HydrationGauge from '../components/HydrationGauge';
@@ -54,9 +54,9 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
     }, [])
   );
 
-  const goToPreviousDay = () => setSelectedDate(prev => addDays(prev, -1));
-  const goToNextDay = () => setSelectedDate(prev => addDays(prev, 1));
-  const goToToday = () => setSelectedDate(getTodayDate());
+  const goToPreviousDay = useCallback(() => setSelectedDate(prev => addDays(prev, -1)), []);
+  const goToNextDay = useCallback(() => setSelectedDate(prev => addDays(prev, 1)), []);
+  const goToToday = useCallback(() => setSelectedDate(getTodayDate()), []);
   const openCalendar = useCallback(() => calendarRef.current?.present(), []);
   const handleCalendarSelect = useCallback((date: string) => setSelectedDate(date), []);
 
@@ -111,22 +111,20 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
   useLayoutEffect(() => {
     if (Platform.OS !== 'ios') return;
 
-    navigation.setOptions({
-      headerLeft: () => (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Choose dashboard date"
-          onPress={openCalendar}
-          className="flex-row items-center px-1 py-2"
-        >
-          <Text className="text-base font-semibold" style={{ color: accentColor || '#007AFF' }}>
-            {formatDateLabel(selectedDate)}
-          </Text>
-          <Icon name="chevron-down" size={14} color={accentColor || '#007AFF'} style={{ marginLeft: 4 }} />
-        </Pressable>
-      ),
+    (navigation as unknown as {
+      setParams: (params: {
+        selectedDate: string;
+        onPreviousDate: () => void;
+        onDatePress: () => void;
+        onNextDate: () => void;
+      }) => void;
+    }).setParams({
+      selectedDate,
+      onPreviousDate: goToPreviousDay,
+      onDatePress: openCalendar,
+      onNextDate: goToNextDay,
     });
-  }, [accentColor, navigation, openCalendar, selectedDate]);
+  }, [goToNextDay, goToPreviousDay, navigation, openCalendar, selectedDate]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -230,14 +228,15 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
 
     return (
       <ScrollView
-        className="flex-1"
+        className="flex-1 bg-background"
+        style={[{ flex: 1 }, topSafeAreaStyle]}
         contentContainerStyle={{
           paddingHorizontal: 16,
           paddingBottom: 80 + activeWorkoutBarPadding,
         }}
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
-        contentInsetAdjustmentBehavior={Platform.OS === 'ios' ? 'automatic' : 'never'}
+        contentInsetAdjustmentBehavior="automatic"
         automaticallyAdjustsScrollIndicatorInsets={Platform.OS === 'ios'}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={accentColor || '#3B82F6'} />
@@ -352,11 +351,11 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
   };
 
   return (
-    <View className="flex-1 bg-background" style={topSafeAreaStyle}>
+    <>
       {renderContent()}
 
       <CalendarSheet ref={calendarRef} selectedDate={selectedDate} onSelectDate={handleCalendarSelect} />
-    </View>
+    </>
   );
 };
 

@@ -176,16 +176,16 @@ const LibraryScreen: React.FC<LibraryScreenProps> = ({ navigation }) => {
   }
 
   return (
-    <View className="flex-1 bg-background" style={Platform.OS === 'ios' ? undefined : { paddingTop: insets.top }}>
-      <ScrollView
-        className="flex-1"
+    <ScrollView
+        className="flex-1 bg-background"
+        style={[{ flex: 1 }, Platform.OS === 'ios' ? undefined : { paddingTop: insets.top }]}
         contentContainerStyle={{
           paddingHorizontal: 16,
           ...(Platform.OS !== 'ios' ? { paddingTop: 16 } : null),
           paddingBottom: insets.bottom + activeWorkoutBarPadding + 16,
         }}
         scrollEventThrottle={16}
-        contentInsetAdjustmentBehavior={Platform.OS === 'ios' ? 'automatic' : 'never'}
+        contentInsetAdjustmentBehavior="automatic"
         automaticallyAdjustsScrollIndicatorInsets={Platform.OS === 'ios'}
         refreshControl={
           <RefreshControl
@@ -372,7 +372,6 @@ const LibraryScreen: React.FC<LibraryScreenProps> = ({ navigation }) => {
           )}
         </View>
       </ScrollView>
-    </View>
   );
 };
 

@@ -114,15 +114,16 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
   };
 
   return (
-    <View className="flex-1 bg-background" style={Platform.OS === 'ios' ? undefined : { paddingTop: insets.top }}>
+    <>
       <ScrollView
-        className="flex-1"
+        className="flex-1 bg-background"
+        style={[{ flex: 1 }, Platform.OS === 'ios' ? undefined : { paddingTop: insets.top }]}
         contentContainerStyle={{
           ...(Platform.OS !== 'ios' ? { paddingTop: 0 } : null),
           paddingBottom: 80 + activeWorkoutBarPadding,
         }}
         scrollEventThrottle={16}
-        contentInsetAdjustmentBehavior={Platform.OS === 'ios' ? 'automatic' : 'never'}
+        contentInsetAdjustmentBehavior="automatic"
         automaticallyAdjustsScrollIndicatorInsets={Platform.OS === 'ios'}
       >
         <View className={Platform.OS === 'ios' ? 'px-4 pb-4' : 'flex-1 p-4'}>
@@ -228,7 +229,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
         visible={showPrivacyModal}
         onClose={() => setShowPrivacyModal(false)}
       />
-    </View>
+    </>
   );
 };
 
