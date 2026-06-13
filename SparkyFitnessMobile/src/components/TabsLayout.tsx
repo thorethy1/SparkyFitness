@@ -19,6 +19,9 @@ export const NON_ADD_TABS = ['Dashboard', 'Diary', 'Library', 'Settings'] as con
 export type NonAddTabName = typeof NON_ADD_TABS[number];
 const ADD_TAB_ICON: AppleIcon = { sfSymbol: 'plus' };
 const IOS_SEARCH_ROLE_MIN_VERSION = 26;
+const IOS_HEADER_ACTION_TINT = '#FFFFFF';
+const IOS_DATE_HEADER_LABEL_WIDTH = 106;
+const IOS_DATE_HEADER_CHEVRON_WIDTH = 28;
 const IOS_NATIVE_HEADER_OPTIONS: NativeStackNavigationOptions = {
   headerShown: true,
   headerLargeTitleEnabled: true,
@@ -149,7 +152,9 @@ function createDateHeaderItems({
       tintColor,
       accessibilityLabel: `${accessibilityLabel}: previous day`,
       identifier: 'date-picker-previous',
-      hidesSharedBackground: true,
+      variant: 'prominent',
+      sharesBackground: true,
+      width: IOS_DATE_HEADER_CHEVRON_WIDTH,
       disabled: !onPreviousDate,
     },
     {
@@ -159,10 +164,12 @@ function createDateHeaderItems({
       label: `${formatDateLabel(selectedDate)} ▾`,
       onPress,
       tintColor,
-      labelStyle: { fontWeight: '600', color: tintColor },
+      labelStyle: { fontSize: 15, fontWeight: '600', color: tintColor },
       accessibilityLabel,
       identifier: 'date-picker',
-      hidesSharedBackground: true,
+      variant: 'prominent',
+      sharesBackground: true,
+      width: IOS_DATE_HEADER_LABEL_WIDTH,
     },
     {
       type: 'button',
@@ -172,15 +179,15 @@ function createDateHeaderItems({
       tintColor,
       accessibilityLabel: `${accessibilityLabel}: next day`,
       identifier: 'date-picker-next',
-      hidesSharedBackground: true,
+      variant: 'prominent',
+      sharesBackground: true,
+      width: IOS_DATE_HEADER_CHEVRON_WIDTH,
       disabled: !onNextDate,
     },
   ];
 }
 
 function DashboardStackScreen() {
-  const accentColor = resolveColor(useCSSVariable('--color-accent-primary') as string, '#007AFF');
-
   return (
     <DashboardStack.Navigator screenOptions={IOS_NATIVE_HEADER_OPTIONS}>
       <DashboardStack.Screen
@@ -194,7 +201,7 @@ function DashboardStackScreen() {
                 onPreviousDate: route.params?.onPreviousDate,
                 onPress: route.params?.onDatePress,
                 onNextDate: route.params?.onNextDate,
-                tintColor: accentColor,
+                tintColor: IOS_HEADER_ACTION_TINT,
                 accessibilityLabel: 'Choose dashboard date',
               })
             : undefined,
@@ -205,8 +212,6 @@ function DashboardStackScreen() {
 }
 
 function DiaryStackScreen() {
-  const accentColor = resolveColor(useCSSVariable('--color-accent-primary') as string, '#007AFF');
-
   return (
     <DiaryStack.Navigator screenOptions={IOS_NATIVE_HEADER_OPTIONS}>
       <DiaryStack.Screen
@@ -220,7 +225,7 @@ function DiaryStackScreen() {
                 onPreviousDate: route.params?.onPreviousDate,
                 onPress: route.params?.onDatePress,
                 onNextDate: route.params?.onNextDate,
-                tintColor: accentColor,
+                tintColor: IOS_HEADER_ACTION_TINT,
                 accessibilityLabel: 'Choose diary date',
               })
             : undefined,
