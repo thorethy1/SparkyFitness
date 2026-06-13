@@ -144,13 +144,15 @@ function createDateHeaderItems({
   return [
     {
       type: 'button',
-      label: 'Previous day',
+      // Keep icon actions title-less so iOS doesn't reserve title width and
+      // collapse the date picker on longer headers like "Dashboard".
+      label: '',
       icon: { type: 'sfSymbol', name: 'chevron.left' },
       onPress: () => onPreviousDate?.(),
       tintColor,
       accessibilityLabel: `${accessibilityLabel}: previous day`,
       identifier: 'date-picker-previous',
-      hidesSharedBackground: true,
+      sharesBackground: true,
       disabled: !onPreviousDate,
     },
     {
@@ -163,17 +165,17 @@ function createDateHeaderItems({
       labelStyle: { fontSize: 15, fontWeight: '600', color: tintColor },
       accessibilityLabel,
       identifier: 'date-picker',
-      hidesSharedBackground: true,
+      sharesBackground: true,
     },
     {
       type: 'button',
-      label: 'Next day',
+      label: '',
       icon: { type: 'sfSymbol', name: 'chevron.right' },
       onPress: () => onNextDate?.(),
       tintColor,
       accessibilityLabel: `${accessibilityLabel}: next day`,
       identifier: 'date-picker-next',
-      hidesSharedBackground: true,
+      sharesBackground: true,
       disabled: !onNextDate,
     },
   ];

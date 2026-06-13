@@ -59,6 +59,23 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
   const goToToday = useCallback(() => setSelectedDate(getTodayDate()), []);
   const openCalendar = useCallback(() => calendarRef.current?.present(), []);
   const handleCalendarSelect = useCallback((date: string) => setSelectedDate(date), []);
+  const syncNativeHeaderDatePicker = useCallback(() => {
+    if (Platform.OS !== 'ios') return;
+
+    (navigation as unknown as {
+      setParams: (params: {
+        selectedDate: string;
+        onPreviousDate: () => void;
+        onDatePress: () => void;
+        onNextDate: () => void;
+      }) => void;
+    }).setParams({
+      selectedDate,
+      onPreviousDate: goToPreviousDay,
+      onDatePress: openCalendar,
+      onNextDate: goToNextDay,
+    });
+  }, [goToNextDay, goToPreviousDay, navigation, openCalendar, selectedDate]);
 
   const { isConnected, isLoading: isConnectionLoading } = useServerConnection();
   const { summary, isLoading, isError, refetch } = useDailySummary({
@@ -109,22 +126,10 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
   const topSafeAreaStyle = Platform.OS === 'ios' ? undefined : { paddingTop: insets.top };
 
   useLayoutEffect(() => {
-    if (Platform.OS !== 'ios') return;
+    syncNativeHeaderDatePicker();
+  }, [syncNativeHeaderDatePicker]);
 
-    (navigation as unknown as {
-      setParams: (params: {
-        selectedDate: string;
-        onPreviousDate: () => void;
-        onDatePress: () => void;
-        onNextDate: () => void;
-      }) => void;
-    }).setParams({
-      selectedDate,
-      onPreviousDate: goToPreviousDay,
-      onDatePress: openCalendar,
-      onNextDate: goToNextDay,
-    });
-  }, [goToNextDay, goToPreviousDay, navigation, openCalendar, selectedDate]);
+  useFocusEffect(syncNativeHeaderDatePicker);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
