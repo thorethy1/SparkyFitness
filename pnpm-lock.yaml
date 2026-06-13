@@ -19,19 +19,23 @@ importers:
 
   .:
     dependencies:
+      '@expo/plist':
+        specifier: 0.4.9
+        version: 0.4.9
       js-yaml:
         specifier: ^4.1.0
         version: 4.1.1
     devDependencies:
-      husky:
-        specifier: ^9.0.0
-        version: 9.1.7
       lint-staged:
         specifier: ^16.4.0
         version: 16.4.0
       prettier:
         specifier: ^3.8.1
         version: 3.8.1
+    optionalDependencies:
+      husky:
+        specifier: ^9.0.0
+        version: 9.1.7
 
   SparkyFitnessFrontend:
     dependencies:
@@ -2868,6 +2872,9 @@ packages:
 
   '@expo/plist@0.0.18':
     resolution: {integrity: sha512-+48gRqUiz65R21CZ/IXa7RNBXgAI/uPSdvJqoN9x1hfL44DNbUoWHgHiEXTx7XelcATpDwNTz6sHLfy0iNqf+w==}
+
+  '@expo/plist@0.4.9':
+    resolution: {integrity: sha512-MPVpmKGfnQEnrCzgxuXcmPP/y/t6AVm+DcSb2Myp21LKWv1N3l8uFxMggesfF4ixAxkRlGmMMx9GyDC9M+XklQ==}
 
   '@expo/plist@0.5.4':
     resolution: {integrity: sha512-Jqppj0FULNq6Zp5JtQrFICl8TtpMjwwUbxEcEC2T3z7m+TOrTQEHZXz3D3Ay7vhbmvD+VMgfWJ4ARclJXeN8Eg==}
@@ -17201,6 +17208,12 @@ snapshots:
       base64-js: 1.5.1
       xmlbuilder: 14.0.0
 
+  '@expo/plist@0.4.9':
+    dependencies:
+      '@xmldom/xmldom': 0.8.11
+      base64-js: 1.5.1
+      xmlbuilder: 15.1.1
+
   '@expo/plist@0.5.4':
     dependencies:
       '@xmldom/xmldom': 0.8.11
@@ -25534,7 +25547,8 @@ snapshots:
 
   human-signals@5.0.0: {}
 
-  husky@9.1.7: {}
+  husky@9.1.7:
+    optional: true
 
   i18next-browser-languagedetector@8.2.1:
     dependencies:
