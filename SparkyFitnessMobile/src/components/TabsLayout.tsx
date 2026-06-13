@@ -20,8 +20,6 @@ export type NonAddTabName = typeof NON_ADD_TABS[number];
 const ADD_TAB_ICON: AppleIcon = { sfSymbol: 'plus' };
 const IOS_SEARCH_ROLE_MIN_VERSION = 26;
 const IOS_HEADER_ACTION_TINT = '#FFFFFF';
-const IOS_DATE_HEADER_LABEL_WIDTH = 106;
-const IOS_DATE_HEADER_CHEVRON_WIDTH = 28;
 const IOS_NATIVE_HEADER_OPTIONS: NativeStackNavigationOptions = {
   headerShown: true,
   headerLargeTitleEnabled: true,
@@ -148,13 +146,11 @@ function createDateHeaderItems({
       type: 'button',
       label: 'Previous day',
       icon: { type: 'sfSymbol', name: 'chevron.left' },
-      onPress: onPreviousDate ?? (() => {}),
+      onPress: () => onPreviousDate?.(),
       tintColor,
       accessibilityLabel: `${accessibilityLabel}: previous day`,
       identifier: 'date-picker-previous',
-      variant: 'prominent',
-      sharesBackground: true,
-      width: IOS_DATE_HEADER_CHEVRON_WIDTH,
+      hidesSharedBackground: true,
       disabled: !onPreviousDate,
     },
     {
@@ -162,26 +158,22 @@ function createDateHeaderItems({
       // Keep this label-only: UIBarButtonItem often prioritizes the SF Symbol
       // and hides text when both label and icon are supplied on iOS 26.
       label: `${formatDateLabel(selectedDate)} ▾`,
-      onPress,
+      onPress: () => onPress(),
       tintColor,
       labelStyle: { fontSize: 15, fontWeight: '600', color: tintColor },
       accessibilityLabel,
       identifier: 'date-picker',
-      variant: 'prominent',
-      sharesBackground: true,
-      width: IOS_DATE_HEADER_LABEL_WIDTH,
+      hidesSharedBackground: true,
     },
     {
       type: 'button',
       label: 'Next day',
       icon: { type: 'sfSymbol', name: 'chevron.right' },
-      onPress: onNextDate ?? (() => {}),
+      onPress: () => onNextDate?.(),
       tintColor,
       accessibilityLabel: `${accessibilityLabel}: next day`,
       identifier: 'date-picker-next',
-      variant: 'prominent',
-      sharesBackground: true,
-      width: IOS_DATE_HEADER_CHEVRON_WIDTH,
+      hidesSharedBackground: true,
       disabled: !onNextDate,
     },
   ];
