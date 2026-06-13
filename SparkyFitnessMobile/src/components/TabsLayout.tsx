@@ -13,28 +13,31 @@ import type { TabParamList } from '../types/navigation';
 import type { AppleIcon, TabRole } from 'react-native-bottom-tabs';
 import { withErrorBoundary } from './ScreenErrorBoundary';
 import CustomTabBar from './CustomTabBar';
-import { formatDateLabel } from '../utils/dateUtils';
+import { formatDateLabel, getTodayDate } from '../utils/dateUtils';
+import { getNativeHeaderDatePickerHandlers, type NativeHeaderDatePickerKey } from '../utils/nativeHeaderDatePicker';
 
 export const NON_ADD_TABS = ['Dashboard', 'Diary', 'Library', 'Settings'] as const;
 export type NonAddTabName = typeof NON_ADD_TABS[number];
 const ADD_TAB_ICON: AppleIcon = { sfSymbol: 'plus' };
 const IOS_SEARCH_ROLE_MIN_VERSION = 26;
-const IOS_HEADER_ACTION_TINT = '#FFFFFF';
-const IOS_NATIVE_HEADER_OPTIONS: NativeStackNavigationOptions = {
-  headerShown: true,
-  headerLargeTitleEnabled: true,
-  headerLargeTitleShadowVisible: false,
-  headerTintColor: '#FFFFFF',
-  headerTitleStyle: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-  },
-  headerLargeTitleStyle: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-  },
-  animation: 'default',
-};
+
+function createIOSNativeHeaderOptions(tintColor: string): NativeStackNavigationOptions {
+  return {
+    headerShown: true,
+    headerLargeTitleEnabled: true,
+    headerLargeTitleShadowVisible: false,
+    headerTintColor: tintColor,
+    headerTitleStyle: {
+      color: tintColor,
+      fontWeight: '600',
+    },
+    headerLargeTitleStyle: {
+      color: tintColor,
+      fontWeight: '700',
+    },
+    animation: 'default',
+  };
+}
 
 let tabsNavigation: { dispatch: (action: NavigationAction) => void; getState: () => { key?: string } } | null = null;
 
@@ -125,6 +128,7 @@ const LibraryStack = createNativeStackNavigator<LibraryStackParamList>();
 const SettingsStack = createNativeStackNavigator<SettingsStackParamList>();
 
 function createDateHeaderItems({
+  handlerKey,
   selectedDate,
   onPreviousDate,
   onPress,
@@ -132,6 +136,7 @@ function createDateHeaderItems({
   tintColor,
   accessibilityLabel,
 }: {
+  handlerKey: NativeHeaderDatePickerKey;
   selectedDate?: string;
   onPreviousDate?: () => void;
   onPress?: () => void;
@@ -139,7 +144,8 @@ function createDateHeaderItems({
   tintColor: string;
   accessibilityLabel: string;
 }): NativeStackHeaderItem[] {
-  if (!selectedDate || !onPress) return [];
+  const latestHandlers = () => getNativeHeaderDatePickerHandlers(handlerKey);
+  const displayDate = selectedDate ?? latestHandlers()?.selectedDate ?? getTodayDate();
 
   return [
     {
@@ -148,19 +154,19 @@ function createDateHeaderItems({
       // collapse the date picker on longer headers like "Dashboard".
       label: '',
       icon: { type: 'sfSymbol', name: 'chevron.left' },
-      onPress: () => onPreviousDate?.(),
+      onPress: () => (latestHandlers()?.onPreviousDate ?? onPreviousDate)?.(),
       tintColor,
       accessibilityLabel: `${accessibilityLabel}: previous day`,
       identifier: 'date-picker-previous',
       sharesBackground: true,
-      disabled: !onPreviousDate,
+      disabled: false,
     },
     {
       type: 'button',
       // Keep this label-only: UIBarButtonItem often prioritizes the SF Symbol
       // and hides text when both label and icon are supplied on iOS 26.
-      label: `${formatDateLabel(selectedDate)} ▾`,
-      onPress: () => onPress(),
+      label: `${formatDateLabel(displayDate)} ▾`,
+      onPress: () => (latestHandlers()?.onDatePress ?? onPress)?.(),
       tintColor,
       labelStyle: { fontSize: 15, fontWeight: '600', color: tintColor },
       accessibilityLabel,
@@ -171,19 +177,30 @@ function createDateHeaderItems({
       type: 'button',
       label: '',
       icon: { type: 'sfSymbol', name: 'chevron.right' },
-      onPress: () => onNextDate?.(),
+      onPress: () => (latestHandlers()?.onNextDate ?? onNextDate)?.(),
       tintColor,
       accessibilityLabel: `${accessibilityLabel}: next day`,
       identifier: 'date-picker-next',
       sharesBackground: true,
-      disabled: !onNextDate,
+      disabled: false,
     },
   ];
 }
 
+function useIOSHeaderTintColor() {
+  const textPrimary = useCSSVariable('--color-text-primary') as string;
+  return resolveColor(textPrimary, '#111827');
+}
+
 function DashboardStackScreen() {
+  const headerTintColor = useIOSHeaderTintColor();
+  const screenOptions = React.useMemo(
+    () => createIOSNativeHeaderOptions(headerTintColor),
+    [headerTintColor],
+  );
+
   return (
-    <DashboardStack.Navigator screenOptions={IOS_NATIVE_HEADER_OPTIONS}>
+    <DashboardStack.Navigator screenOptions={screenOptions}>
       <DashboardStack.Screen
         name="DashboardRoot"
         component={SafeDashboard as React.ComponentType}
@@ -191,11 +208,12 @@ function DashboardStackScreen() {
           title: 'Dashboard',
           unstable_headerRightItems: Platform.OS === 'ios'
             ? () => createDateHeaderItems({
+                handlerKey: 'Dashboard',
                 selectedDate: route.params?.selectedDate,
                 onPreviousDate: route.params?.onPreviousDate,
                 onPress: route.params?.onDatePress,
                 onNextDate: route.params?.onNextDate,
-                tintColor: IOS_HEADER_ACTION_TINT,
+                tintColor: headerTintColor,
                 accessibilityLabel: 'Choose dashboard date',
               })
             : undefined,
@@ -206,8 +224,14 @@ function DashboardStackScreen() {
 }
 
 function DiaryStackScreen() {
+  const headerTintColor = useIOSHeaderTintColor();
+  const screenOptions = React.useMemo(
+    () => createIOSNativeHeaderOptions(headerTintColor),
+    [headerTintColor],
+  );
+
   return (
-    <DiaryStack.Navigator screenOptions={IOS_NATIVE_HEADER_OPTIONS}>
+    <DiaryStack.Navigator screenOptions={screenOptions}>
       <DiaryStack.Screen
         name="DiaryRoot"
         component={SafeDiary as React.ComponentType}
@@ -215,11 +239,12 @@ function DiaryStackScreen() {
           title: 'Diary',
           unstable_headerRightItems: Platform.OS === 'ios'
             ? () => createDateHeaderItems({
+                handlerKey: 'Diary',
                 selectedDate: route.params?.selectedDate,
                 onPreviousDate: route.params?.onPreviousDate,
                 onPress: route.params?.onDatePress,
                 onNextDate: route.params?.onNextDate,
-                tintColor: IOS_HEADER_ACTION_TINT,
+                tintColor: headerTintColor,
                 accessibilityLabel: 'Choose diary date',
               })
             : undefined,
@@ -230,16 +255,28 @@ function DiaryStackScreen() {
 }
 
 function LibraryStackScreen() {
+  const headerTintColor = useIOSHeaderTintColor();
+  const screenOptions = React.useMemo(
+    () => createIOSNativeHeaderOptions(headerTintColor),
+    [headerTintColor],
+  );
+
   return (
-    <LibraryStack.Navigator screenOptions={IOS_NATIVE_HEADER_OPTIONS}>
+    <LibraryStack.Navigator screenOptions={screenOptions}>
       <LibraryStack.Screen name="LibraryRoot" component={SafeLibrary as React.ComponentType} options={{ title: 'Library' }} />
     </LibraryStack.Navigator>
   );
 }
 
 function SettingsStackScreen() {
+  const headerTintColor = useIOSHeaderTintColor();
+  const screenOptions = React.useMemo(
+    () => createIOSNativeHeaderOptions(headerTintColor),
+    [headerTintColor],
+  );
+
   return (
-    <SettingsStack.Navigator screenOptions={IOS_NATIVE_HEADER_OPTIONS}>
+    <SettingsStack.Navigator screenOptions={screenOptions}>
       <SettingsStack.Screen name="SettingsRoot" component={SafeSettings as React.ComponentType} options={{ title: 'Settings' }} />
     </SettingsStack.Navigator>
   );
@@ -283,17 +320,17 @@ export function NativeTabsLayout({
         };
       }}
     >
-      <NativeTab.Screen 
-        name="Dashboard" 
-        component={DashboardStackScreen} 
+      <NativeTab.Screen
+        name="Dashboard"
+        component={DashboardStackScreen}
         options={{
           tabBarLabel: 'Dashboard',
           tabBarIcon: () => ({ sfSymbol: 'house' } as unknown as AppleIcon),
         }}
       />
-      <NativeTab.Screen 
-        name="Diary" 
-        component={DiaryStackScreen} 
+      <NativeTab.Screen
+        name="Diary"
+        component={DiaryStackScreen}
         options={{
           tabBarLabel: 'Diary',
           tabBarIcon: () => ({ sfSymbol: 'doc.text' } as unknown as AppleIcon),
@@ -315,17 +352,17 @@ export function NativeTabsLayout({
           },
         }}
       />
-      <NativeTab.Screen 
-        name="Library" 
-        component={LibraryStackScreen} 
+      <NativeTab.Screen
+        name="Library"
+        component={LibraryStackScreen}
         options={{
           tabBarLabel: 'Library',
           tabBarIcon: () => ({ sfSymbol: 'book' } as unknown as AppleIcon),
         }}
       />
-      <NativeTab.Screen 
-        name="Settings" 
-        component={SettingsStackScreen} 
+      <NativeTab.Screen
+        name="Settings"
+        component={SettingsStackScreen}
         options={{
           tabBarLabel: 'Settings',
           tabBarIcon: () => ({ sfSymbol: 'gearshape' } as unknown as AppleIcon),

@@ -21,6 +21,7 @@ import { useMeasurements } from '../hooks/useMeasurements';
 import { usePreferences } from '../hooks/usePreferences';
 import { useExerciseImageSource } from '../hooks/useExerciseImageSource';
 import { addDays, getTodayDate } from '../utils/dateUtils';
+import { setNativeHeaderDatePickerHandlers } from '../utils/nativeHeaderDatePicker';
 import type { MealTypeKey } from '../utils/mealNutrition';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
@@ -55,7 +56,18 @@ const DiaryScreen: React.FC<DiaryScreenProps> = ({ navigation }) => {
   const openCalendar = useCallback(() => calendarRef.current?.present(), []);
   const accentColor = useCSSVariable('--color-accent-primary') as string;
 
-  useLayoutEffect(() => {
+  const syncNativeHeaderDatePicker = useCallback(() => {
+    if (Platform.OS !== 'ios') return;
+
+    const handlers = {
+      selectedDate,
+      onPreviousDate: goToPreviousDay,
+      onDatePress: openCalendar,
+      onNextDate: goToNextDay,
+    };
+
+    setNativeHeaderDatePickerHandlers('Diary', handlers);
+
     (navigation as unknown as {
       setParams: (params: {
         selectedDate: string;
@@ -63,13 +75,18 @@ const DiaryScreen: React.FC<DiaryScreenProps> = ({ navigation }) => {
         onDatePress: () => void;
         onNextDate: () => void;
       }) => void;
-    }).setParams({
-      selectedDate,
-      onPreviousDate: goToPreviousDay,
-      onDatePress: openCalendar,
-      onNextDate: goToNextDay,
-    });
+    }).setParams(handlers);
   }, [goToNextDay, goToPreviousDay, navigation, openCalendar, selectedDate]);
+
+  useLayoutEffect(() => {
+    syncNativeHeaderDatePicker();
+  }, [syncNativeHeaderDatePicker]);
+
+  useFocusEffect(
+    useCallback(() => {
+      syncNativeHeaderDatePicker();
+    }, [syncNativeHeaderDatePicker])
+  );
 
   const swipeGesture = useMemo(() => Gesture.Race(
     Gesture.Fling().direction(Directions.RIGHT).onEnd(goToPreviousDay).runOnJS(true),

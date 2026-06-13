@@ -12,6 +12,7 @@ import MacroCard from '../components/MacroCard';
 import DateNavigator from '../components/DateNavigator';
 import CalendarSheet, { type CalendarSheetRef } from '../components/CalendarSheet';
 import { addDays, getTodayDate } from '../utils/dateUtils';
+import { setNativeHeaderDatePickerHandlers } from '../utils/nativeHeaderDatePicker';
 import { weightFromKg } from '../utils/unitConversions';
 import { getNetCarbsValue } from '../utils/nutrientUtils';
 import HydrationGauge from '../components/HydrationGauge';
@@ -62,6 +63,15 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
   const syncNativeHeaderDatePicker = useCallback(() => {
     if (Platform.OS !== 'ios') return;
 
+    const handlers = {
+      selectedDate,
+      onPreviousDate: goToPreviousDay,
+      onDatePress: openCalendar,
+      onNextDate: goToNextDay,
+    };
+
+    setNativeHeaderDatePickerHandlers('Dashboard', handlers);
+
     (navigation as unknown as {
       setParams: (params: {
         selectedDate: string;
@@ -69,12 +79,7 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
         onDatePress: () => void;
         onNextDate: () => void;
       }) => void;
-    }).setParams({
-      selectedDate,
-      onPreviousDate: goToPreviousDay,
-      onDatePress: openCalendar,
-      onNextDate: goToNextDay,
-    });
+    }).setParams(handlers);
   }, [goToNextDay, goToPreviousDay, navigation, openCalendar, selectedDate]);
 
   const { isConnected, isLoading: isConnectionLoading } = useServerConnection();
@@ -129,7 +134,11 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
     syncNativeHeaderDatePicker();
   }, [syncNativeHeaderDatePicker]);
 
-  useFocusEffect(syncNativeHeaderDatePicker);
+  useFocusEffect(
+    useCallback(() => {
+      syncNativeHeaderDatePicker();
+    }, [syncNativeHeaderDatePicker])
+  );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
