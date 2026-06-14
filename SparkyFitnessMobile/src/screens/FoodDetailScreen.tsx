@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { Platform, View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCSSVariable } from 'uniwind';
@@ -9,7 +9,7 @@ import FoodNutritionSummary from '../components/FoodNutritionSummary';
 import StatusView from '../components/StatusView';
 import SettingsRow, { SettingsRowGroup } from '../components/SettingsRow';
 import { useActiveWorkoutBarPadding } from '../components/ActiveWorkoutBar';
-import { createNativeHeaderTextButtonItem } from '../utils/nativeHeaderItems';
+import { createNativeHeaderIconButtonItem, createNativeHeaderTextButtonItem } from '../utils/nativeHeaderItems';
 import { useDeleteFood, useFoodVariants, useProfile, useServerConnection, usePreferences } from '../hooks';
 import {
   buildExternalVariantOptions,
@@ -121,7 +121,7 @@ const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ navigation, route }
     },
   });
 
-  const handleEdit = () => {
+  const handleEdit = useCallback(() => {
     if (!selectedVariantId) {
       return;
     }
@@ -155,12 +155,22 @@ const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ navigation, route }
         vitaminC: displayValues.vitaminC != null ? String(displayValues.vitaminC) : '',
       },
     });
-  };
+  }, [displayValues, food, navigation, route.key, selectedCustomNutrients, selectedVariantId]);
 
   useLayoutEffect(() => {
     if (Platform.OS !== 'ios') return;
 
     navigation.setOptions({
+      title: food.name,
+      unstable_headerLeftItems: () => [
+        createNativeHeaderIconButtonItem({
+          sfSymbol: 'chevron.left',
+          identifier: 'food-detail-back',
+          tintColor: textPrimary,
+          accessibilityLabel: 'Back',
+          onPress: () => navigation.goBack(),
+        }),
+      ],
       unstable_headerRightItems: canManageFood
         ? () => [
             createNativeHeaderTextButtonItem({
@@ -174,7 +184,7 @@ const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ navigation, route }
           ]
         : undefined,
     });
-  }, [navigation, canManageFood, selectedVariantId, textPrimary, handleEdit]);
+  }, [navigation, canManageFood, selectedVariantId, textPrimary, handleEdit, food.name]);
 
   const renderContent = () => {
     if (!isConnectionLoading && !isConnected) {
@@ -192,13 +202,14 @@ const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ navigation, route }
 
     return (
       <ScrollView
-        className="flex-1"
+        className="flex-1 bg-background"
         contentContainerStyle={{
           paddingHorizontal: 16,
           paddingTop: 16,
           paddingBottom: insets.bottom + activeWorkoutBarPadding + 16,
           gap: 16,
         }}
+        contentInsetAdjustmentBehavior={Platform.OS === 'ios' ? 'automatic' : undefined}
       >
         <FoodNutritionSummary
           name={food.name}
@@ -299,13 +310,18 @@ const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ navigation, route }
     );
   };
 
+  if (Platform.OS === 'ios') {
+    return renderContent();
+  }
+
   return (
-    <View className="flex-1 bg-background" style={Platform.OS === 'ios' ? undefined : { paddingTop: insets.top }}>
-      {Platform.OS !== 'ios' && (
+    <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
       <View className="flex-row items-center px-4 py-3 border-b border-border-subtle">
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityLabel="Back"
+          accessibilityRole="button"
         >
           <Icon name="chevron-back" size={22} color={accentColor} />
         </TouchableOpacity>
@@ -323,7 +339,6 @@ const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ navigation, route }
           </View>
         )}
       </View>
-      )}
       {renderContent()}
     </View>
   );

@@ -780,7 +780,7 @@ function AppContent() {
           <Stack.Screen
             name="FoodDetail"
             component={SafeFoodDetail}
-            options={({ route }) => createStackScreenOptions(route.params.updatedItem?.name ?? route.params.item.name)}
+            options={createStackScreenOptions('', { headerBackTitle: 'Library' })}
           />
           <Stack.Screen
             name="MealDetail"
