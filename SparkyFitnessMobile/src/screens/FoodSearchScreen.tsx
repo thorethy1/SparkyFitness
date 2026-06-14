@@ -798,6 +798,7 @@ const FoodSearchScreen: React.FC<FoodSearchScreenProps> = ({ navigation, route }
         renderItem={renderExternalFoodItem}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
+        contentInsetAdjustmentBehavior="automatic"
         contentContainerClassName="pb-safe-or-4"
         ListHeaderComponent={
           <>

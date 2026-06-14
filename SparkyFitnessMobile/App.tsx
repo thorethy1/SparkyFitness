@@ -893,7 +893,7 @@ function AppContent() {
             options={({ route }) => createStackScreenOptions(
               route.params?.mode === 'edit' ? 'Edit Meal' : 'Create Meal',
               {
-              presentation: 'modal',
+              presentation: Platform.OS === 'ios' ? 'fullScreenModal' : 'modal',
               ...(Platform.OS === 'android' ? androidModalAnimation : {}),
               },
             )}
