@@ -64,6 +64,7 @@ describe('FoodDetailScreen', () => {
     goBack: jest.fn(),
     navigate: jest.fn(),
     setParams: jest.fn(),
+    setOptions: jest.fn(),
   } as any;
 
   const baseItem = {
@@ -214,7 +215,8 @@ describe('FoodDetailScreen', () => {
     const screen = renderScreen();
 
     fireEvent.press(screen.getAllByText('2 cup (200 cal)')[0]);
-    fireEvent.press(screen.getByText('Edit'));
+    const latestHeaderOptions = navigation.setOptions.mock.calls.at(-1)?.[0];
+    latestHeaderOptions.unstable_headerRightItems()[0].onPress();
 
     expect(navigation.navigate).toHaveBeenCalledWith(
       'FoodForm',
