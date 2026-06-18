@@ -198,63 +198,12 @@
     }
 
     @variant red {
-      --color-background:        #141011;
-      --color-surface:           #201C1E;
-      --color-raised:            #2a2426;
-      --color-chrome:            rgba(20, 16, 17, 0.9);
-
-      --color-border-subtle:     #2e2628;
-      --color-border:            #3a3032;
-      --color-border-strong:     #4a3e40;
-      --color-chrome-border:     #32282a;
-
-      --color-text-primary:      #F2F0F0;
-      --color-text-secondary:    #B9B1B1;
-      --color-text-muted:        #7a7272;
-      --color-icon-decorative:   #7a7272;
-
-      --color-accent-primary:    #E35D5B;
-      --color-accent-muted:      #c44d4b;
-      --color-accent-text:       #fce9e9;
-
-      --color-text-link:         #e8706e;
-
-      --color-tab-active:        #E35D5B;
-      --color-tab-inactive:      #8a8080;
-      --color-form-enabled:      #E35D5B;
-      --color-form-disabled:     #2e2628;
-
-      --color-calories:          #E35D5B;
-      --color-macro-protein:     #d4a060;
-      --color-macro-carbs:       #7cb87c;
-      --color-macro-fat:         #6db8d8;
-      --color-macro-fiber:       #8aaa5d;
-
-      --color-hydration:         #5a9ec7;
-      --color-exercise:          #5daa8f;
-
-      --color-cat-slate:         #7a8a9a;
-      --color-cat-pink:          #c77d9a;
-      --color-cat-violet:        #9a7dc7;
-      --color-cat-orange:        #c79a6d;
-
-      --color-progress-track:    #2e2628;
-      --color-progress-overfill: #E35D5B;
-
-      --color-bg-success:        #1a3a2a;
-      --color-bg-info:           #1a2a3a;
-      --color-bg-warning:        #3a2a1a;
-      --color-bg-danger:         #4a2020;
-      --color-bg-danger-subtle:  #3a1a1a;
-
-      --color-text-success:      #a0d8b8;
-      --color-icon-success:      #4cd18f;
-      --color-text-info:         #a0d0f0;
-      --color-text-warning:      #f0d8a0;
-      --color-icon-warning:      #e0a040;
-      --color-text-danger:       #f0b0b0;
-      --color-text-danger-subtle: #f0a0a0;
-      --color-icon-danger:       #E35D5B;
+      --color-accent-primary:    hsl(0, 85%, 55%);
+      --color-accent-muted:      hsl(0, 65%, 60%);
+      --color-accent-text:       hsl(0, 100%, 97%);
+      --color-text-link:         hsl(0, 80%, 60%);
+      --color-tab-active:        hsl(0, 85%, 55%);
+      --color-progress-overfill: hsl(0, 66%, 65%);
     }
   }
 }

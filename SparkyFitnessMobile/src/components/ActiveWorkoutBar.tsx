@@ -67,6 +67,8 @@ const HIDDEN_ROUTES = new Set<string>([
   'WorkoutAdd',
   'ActivityAdd',
   'MeasurementsAdd',
+  'ActiveWorkoutExercise',
+  'WorkoutSummary',
 ]);
 
 function formatCountdown(totalSeconds: number): string {

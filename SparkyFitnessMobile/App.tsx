@@ -52,6 +52,8 @@ import MealAddScreen from './src/screens/MealAddScreen';
 import WorkoutAddScreen from './src/screens/WorkoutAddScreen';
 import ActivityAddScreen from './src/screens/ActivityAddScreen';
 import WorkoutDetailScreen from './src/screens/WorkoutDetailScreen';
+import ActiveWorkoutExerciseScreen from './src/screens/ActiveWorkoutExerciseScreen';
+import WorkoutSummaryScreen from './src/screens/WorkoutSummaryScreen';
 import ActivityDetailScreen from './src/screens/ActivityDetailScreen';
 import ExerciseSearchScreen from './src/screens/ExerciseSearchScreen';
 import PresetSearchScreen from './src/screens/PresetSearchScreen';
@@ -155,6 +157,8 @@ const SafePresetSearch = withErrorBoundary(PresetSearchScreen, 'PresetSearch', {
 const SafeWorkoutAdd = withErrorBoundary(WorkoutAddScreen, 'WorkoutAdd', { canGoBack: true });
 const SafeActivityAdd = withErrorBoundary(ActivityAddScreen, 'ActivityAdd', { canGoBack: true });
 const SafeWorkoutDetail = withErrorBoundary(WorkoutDetailScreen, 'WorkoutDetail', { canGoBack: true });
+const SafeActiveWorkoutExercise = withErrorBoundary(ActiveWorkoutExerciseScreen, 'ActiveWorkoutExercise', { canGoBack: false });
+const SafeWorkoutSummary = withErrorBoundary(WorkoutSummaryScreen, 'WorkoutSummary', { canGoBack: false });
 const SafeActivityDetail = withErrorBoundary(ActivityDetailScreen, 'ActivityDetail', { canGoBack: true });
 const SafeLogs = withErrorBoundary(LogScreen, 'Logs', { canGoBack: true });
 const SafeSync = withErrorBoundary(SyncScreen, 'Sync', { canGoBack: true });
@@ -252,7 +256,7 @@ function AppContent() {
   );
 
   // Determine if we're in dark mode based on current theme
-  const isDarkMode = theme === 'dark' || theme === 'amoled' || theme === 'red';
+  const isDarkMode = theme === 'dark' || theme === 'amoled';
 
   useEffect(() => {
     if (Platform.OS !== 'android') return;
@@ -780,7 +784,7 @@ function AppContent() {
           <Stack.Screen
             name="FoodDetail"
             component={SafeFoodDetail}
-            options={createStackScreenOptions('', { headerBackTitle: 'Library' })}
+            options={({ route }) => createStackScreenOptions(route.params.updatedItem?.name ?? route.params.item.name)}
           />
           <Stack.Screen
             name="MealDetail"
@@ -893,7 +897,7 @@ function AppContent() {
             options={({ route }) => createStackScreenOptions(
               route.params?.mode === 'edit' ? 'Edit Meal' : 'Create Meal',
               {
-              presentation: 'modal',
+              presentation: Platform.OS === 'ios' ? 'fullScreenModal' : 'modal',
               ...(Platform.OS === 'android' ? androidModalAnimation : {}),
               },
             )}
@@ -911,7 +915,7 @@ function AppContent() {
           <Stack.Screen
             name="MealTypeDetail"
             component={SafeMealTypeDetail}
-            options={({ route }) => createStackScreenOptions(route.params.mealLabel ?? 'Meal', { headerBackTitle: 'Diary' })}
+            options={({ route }) => createStackScreenOptions(route.params.mealLabel ?? 'Meal')}
           />
           <Stack.Screen
             name="ExerciseSearch"
@@ -950,6 +954,16 @@ function AppContent() {
                     gestureEnabled: true,
                   }
             }
+          />
+          <Stack.Screen
+            name="ActiveWorkoutExercise"
+            component={SafeActiveWorkoutExercise}
+            options={{ gestureEnabled: false }}
+          />
+          <Stack.Screen
+            name="WorkoutSummary"
+            component={SafeWorkoutSummary}
+            options={{ gestureEnabled: false }}
           />
           <Stack.Screen
             name="ActivityDetail"
