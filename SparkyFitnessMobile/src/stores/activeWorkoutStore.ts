@@ -22,6 +22,13 @@ export interface WorkoutStep {
   restSec: number;
 }
 
+/** Per-set override data entered during an active workout. */
+export interface SetOverrideData {
+  weight: number | null;
+  reps: number | null;
+  rir: number | null;
+}
+
 /**
  * Rest-timer state for the currently-active workout. The rest always
  * represents "the rest period before `activeSetId`" — i.e., when the user
@@ -57,7 +64,7 @@ export interface ActiveWorkoutState {
   /**
    * Full session snapshot for the currently-active workout. Persisted alongside
    * `steps` so the HUD can reopen WorkoutDetail after a cold start or from
-   * screens where the history cache hasn't been warmed yet.
+   * screens where the history cache hasn't warmed yet.
    */
   session: PresetSessionResponse | null;
   steps: WorkoutStep[];
@@ -70,6 +77,10 @@ export interface ActiveWorkoutState {
    */
   activeSetId: string | null;
   rest: Rest;
+  /** Per-set override data (weight, reps, rir) entered during the workout. Keyed by setId. */
+  setOverrides: Record<string, SetOverrideData>;
+  /** Timestamp (ms) when the workout was started. */
+  startedAt: number | null;
 
   startWorkout: (session: PresetSessionResponse) => void;
   startWorkoutAtSet: (session: PresetSessionResponse, setId: string) => void;
@@ -89,11 +100,15 @@ export interface ActiveWorkoutState {
   /** Guarded transition fired by the HUD tick when `endsAt` passes. */
   markRestReady: () => void;
   reconcileWithSession: (session: PresetSessionResponse) => void;
+  /** Update weight/reps/rir for a specific set. */
+  setSetOverride: (setId: string, data: Partial<SetOverrideData>) => void;
+  /** Get override data for a specific set (or null if none). */
+  getSetOverride: (setId: string) => SetOverrideData | null;
 }
 
 const initialData: Pick<
   ActiveWorkoutState,
-  'sessionId' | 'session' | 'steps' | 'completedSetIds' | 'activeSetId' | 'rest'
+  'sessionId' | 'session' | 'steps' | 'completedSetIds' | 'activeSetId' | 'rest' | 'setOverrides' | 'startedAt'
 > = {
   sessionId: null,
   session: null,
@@ -101,6 +116,8 @@ const initialData: Pick<
   completedSetIds: {},
   activeSetId: null,
   rest: READY_REST,
+  setOverrides: {},
+  startedAt: null,
 };
 
 function buildStepsFromSession(session: PresetSessionResponse): WorkoutStep[] {
@@ -189,6 +206,8 @@ export const useActiveWorkoutStore = create<ActiveWorkoutState>()(
           completedSetIds: {},
           activeSetId: steps[0]?.setId ?? null,
           rest: READY_REST,
+          setOverrides: {},
+          startedAt: Date.now(),
         });
       },
 
@@ -210,6 +229,8 @@ export const useActiveWorkoutStore = create<ActiveWorkoutState>()(
           completedSetIds,
           activeSetId: setId,
           rest: READY_REST,
+          setOverrides: {},
+          startedAt: Date.now(),
         });
       },
 
@@ -386,6 +407,12 @@ export const useActiveWorkoutStore = create<ActiveWorkoutState>()(
           if (newSetIds.has(id)) nextCompleted[id] = true;
         }
 
+        // Preserve overrides for sets that still exist
+        const nextOverrides: Record<string, SetOverrideData> = {};
+        for (const [id, data] of Object.entries(state.setOverrides)) {
+          if (newSetIds.has(id)) nextOverrides[id] = data;
+        }
+
         // If the cursor points at a set that no longer exists, fall back to
         // the first uncompleted step. If every remaining step is already
         // complete (or there are no steps), the workout is done → null.
@@ -409,12 +436,28 @@ export const useActiveWorkoutStore = create<ActiveWorkoutState>()(
           completedSetIds: nextCompleted,
           activeSetId: nextActiveSetId,
           rest: nextRest,
+          setOverrides: nextOverrides,
         });
+      },
+
+      setSetOverride: (setId, data) => {
+        const state = get();
+        const existing = state.setOverrides[setId] ?? { weight: null, reps: null, rir: null };
+        set({
+          setOverrides: {
+            ...state.setOverrides,
+            [setId]: { ...existing, ...data },
+          },
+        });
+      },
+
+      getSetOverride: (setId) => {
+        return get().setOverrides[setId] ?? null;
       },
     }),
     {
       name: STORAGE_KEY,
-      version: 2,
+      version: 3,
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
         sessionId: state.sessionId,
@@ -423,84 +466,21 @@ export const useActiveWorkoutStore = create<ActiveWorkoutState>()(
         completedSetIds: state.completedSetIds,
         activeSetId: state.activeSetId,
         rest: state.rest,
+        setOverrides: state.setOverrides,
+        startedAt: state.startedAt,
       }),
       migrate: (persistedState, version) => {
-        if (version >= 2 || !persistedState || typeof persistedState !== 'object') {
+        if (version >= 3 || !persistedState || typeof persistedState !== 'object') {
           return persistedState as ActiveWorkoutState;
         }
 
-        // v1 → v2:
-        //  - Split `activeRest` (which tracked "the rest after the just-
-        //    completed set") into an `activeSetId` cursor (the *next* set)
-        //    plus a `rest` object that sits before it.
-        //  - Rename rest states: 'running' → 'resting', 'complete' → 'ready'.
-        //  - Drop any final rest timer (v2 doesn't start one after the last
-        //    set), which naturally falls out of "first uncompleted step".
-        const v1 = persistedState as {
-          sessionId?: string | null;
-          session?: ActiveWorkoutState['session'];
-          steps?: WorkoutStep[];
-          completedSetIds?: Record<string, true>;
-          activeRest?: {
-            setId: string;
-            state: 'running' | 'paused' | 'complete';
-            durationSec: number;
-            endsAt: number | null;
-            pausedRemainingMs: number | null;
-            scheduledNotificationId: string | null;
-            instanceToken: number;
-          } | null;
-        };
-
-        const steps = Array.isArray(v1.steps) ? v1.steps : [];
-        const completedSetIds: Record<string, true> =
-          v1.completedSetIds && typeof v1.completedSetIds === 'object'
-            ? v1.completedSetIds
-            : {};
-
-        // The new cursor is the first uncompleted step. This matches what v1
-        // implicitly computed at the call sites of "next pending set", so a
-        // user mid-rest in v1 lands on the same set in v2.
-        const nextStep = steps.find((s) => !completedSetIds[s.setId]);
-        const activeSetId = nextStep?.setId ?? null;
-
-        // Rest carries over only if (a) there's somewhere to point it and
-        // (b) it wasn't already finished. 'complete' and null both collapse
-        // to READY_REST — the user can just tap the next set.
-        let rest: Rest = { ...READY_REST };
-        const oldRest = v1.activeRest;
-        if (oldRest && activeSetId != null) {
-          if (oldRest.state === 'running') {
-            rest = {
-              state: 'resting',
-              durationSec: oldRest.durationSec ?? 0,
-              endsAt: oldRest.endsAt ?? null,
-              pausedRemainingMs: null,
-              scheduledNotificationId: oldRest.scheduledNotificationId ?? null,
-              instanceToken: oldRest.instanceToken ?? 0,
-            };
-          } else if (oldRest.state === 'paused') {
-            rest = {
-              state: 'paused',
-              durationSec: oldRest.durationSec ?? 0,
-              endsAt: null,
-              pausedRemainingMs: oldRest.pausedRemainingMs ?? null,
-              scheduledNotificationId: null,
-              instanceToken: oldRest.instanceToken ?? 0,
-            };
-          }
-          // 'complete' → already ready; nothing to migrate.
-        }
-
+        // v1/v2 → v3: add setOverrides and startedAt
+        const base = persistedState as ActiveWorkoutState;
         return {
-          ...initialData,
-          sessionId: v1.sessionId ?? null,
-          session: v1.session ?? null,
-          steps,
-          completedSetIds,
-          activeSetId,
-          rest,
-        } as ActiveWorkoutState;
+          ...base,
+          setOverrides: (persistedState as Record<string, unknown>).setOverrides ?? {},
+          startedAt: (persistedState as Record<string, unknown>).startedAt ?? null,
+        };
       },
       merge: (persisted, current) => {
         const merged = {

@@ -52,6 +52,8 @@ import MealAddScreen from './src/screens/MealAddScreen';
 import WorkoutAddScreen from './src/screens/WorkoutAddScreen';
 import ActivityAddScreen from './src/screens/ActivityAddScreen';
 import WorkoutDetailScreen from './src/screens/WorkoutDetailScreen';
+import ActiveWorkoutExerciseScreen from './src/screens/ActiveWorkoutExerciseScreen';
+import WorkoutSummaryScreen from './src/screens/WorkoutSummaryScreen';
 import ActivityDetailScreen from './src/screens/ActivityDetailScreen';
 import ExerciseSearchScreen from './src/screens/ExerciseSearchScreen';
 import PresetSearchScreen from './src/screens/PresetSearchScreen';
@@ -155,6 +157,8 @@ const SafePresetSearch = withErrorBoundary(PresetSearchScreen, 'PresetSearch', {
 const SafeWorkoutAdd = withErrorBoundary(WorkoutAddScreen, 'WorkoutAdd', { canGoBack: true });
 const SafeActivityAdd = withErrorBoundary(ActivityAddScreen, 'ActivityAdd', { canGoBack: true });
 const SafeWorkoutDetail = withErrorBoundary(WorkoutDetailScreen, 'WorkoutDetail', { canGoBack: true });
+const SafeActiveWorkoutExercise = withErrorBoundary(ActiveWorkoutExerciseScreen, 'ActiveWorkoutExercise', { canGoBack: false });
+const SafeWorkoutSummary = withErrorBoundary(WorkoutSummaryScreen, 'WorkoutSummary', { canGoBack: false });
 const SafeActivityDetail = withErrorBoundary(ActivityDetailScreen, 'ActivityDetail', { canGoBack: true });
 const SafeLogs = withErrorBoundary(LogScreen, 'Logs', { canGoBack: true });
 const SafeSync = withErrorBoundary(SyncScreen, 'Sync', { canGoBack: true });
@@ -950,6 +954,16 @@ function AppContent() {
                     gestureEnabled: true,
                   }
             }
+          />
+          <Stack.Screen
+            name="ActiveWorkoutExercise"
+            component={SafeActiveWorkoutExercise}
+            options={{ gestureEnabled: false }}
+          />
+          <Stack.Screen
+            name="WorkoutSummary"
+            component={SafeWorkoutSummary}
+            options={{ gestureEnabled: false }}
           />
           <Stack.Screen
             name="ActivityDetail"

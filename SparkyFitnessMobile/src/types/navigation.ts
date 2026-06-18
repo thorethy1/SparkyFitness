@@ -150,6 +150,8 @@ export type RootStackParamList = {
   } | undefined;
   ActivityAdd: { entry?: IndividualSessionResponse; date?: string; popCount?: number; selectedExercise?: Exercise; selectionNonce?: number; skipDraftLoad?: boolean } | undefined;
   WorkoutDetail: { session: PresetSessionResponse; selectedExercise?: Exercise; selectionNonce?: number };
+  ActiveWorkoutExercise: undefined;
+  WorkoutSummary: { sessionId: string; sessionName: string; entryDate: string; durationMinutes: number; totalCalories: number };
   ActivityDetail: { session: IndividualSessionResponse };
   Logs: undefined;
   Sync: undefined;

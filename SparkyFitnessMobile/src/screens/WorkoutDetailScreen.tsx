@@ -418,6 +418,7 @@ const WorkoutDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     }
     void ensureNotificationPermission();
     useActiveWorkoutStore.getState().startWorkout(session);
+    navigation.navigate('ActiveWorkoutExercise');
   };
 
   const handleLongPressSet = (setId: string) => {
