@@ -105,15 +105,10 @@ type ProviderFamily = 'google' | 'openai' | 'anthropic' | 'ollama';
 const HEIC_MIME_TYPES = new Set(['image/heic', 'image/heif']);
 
 // OpenAI-family providers that reliably support strict `response_format.json_schema`.
-// Others (openai_compatible/custom) fall back to `json_object` with the schema
-// embedded in the prompt, since arbitrary compatible servers may not support it.
-const STRICT_SCHEMA_PROVIDERS = new Set([
-  'openai',
-  'mistral',
-  'groq',
-  'openrouter',
-  'xai',
-]);
+// Others (openai_compatible/custom/openrouter) fall back to `json_object` with
+// the schema embedded in the prompt, since proxy/router services may not support
+// strict structured-output parameters for every model route.
+const STRICT_SCHEMA_PROVIDERS = new Set(['openai', 'mistral', 'groq', 'xai']);
 
 function providerFamily(serviceType: string): ProviderFamily | null {
   switch (serviceType) {
@@ -329,10 +324,6 @@ function buildOpenAiFamilyRequest(ctx: BuildContext): BuiltRequest {
           schema: toStrictJsonSchema(ctx.jsonSchema),
         },
       };
-      // OpenRouter refuses to route to a model lacking structured-output support.
-      if (ctx.provider.service_type === 'openrouter') {
-        body.provider = { require_parameters: true };
-      }
     } else {
       body.response_format = { type: 'json_object' };
     }

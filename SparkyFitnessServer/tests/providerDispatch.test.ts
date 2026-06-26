@@ -255,7 +255,7 @@ describe('dispatchAiRequest — text-only structured request shapes', () => {
     expect(body.provider).toBeUndefined();
   });
 
-  it('openrouter sends strict json_schema, provider.require_parameters, and attribution headers', async () => {
+  it('openrouter uses json_object fallback with attribution headers', async () => {
     const m = mockFetch(openAiBody(JSON.stringify(SAMPLE)));
     await dispatchAiRequest(
       baseRequest({ provider: makeProvider({ service_type: 'openrouter' }) })
@@ -264,8 +264,12 @@ describe('dispatchAiRequest — text-only structured request shapes', () => {
     expect(url).toBe('https://openrouter.ai/api/v1/chat/completions');
     expect(headers['HTTP-Referer']).toBe('https://sparky-fitness.com');
     expect(headers['X-Title']).toBe('Sparky Fitness');
-    expect((body.response_format as { type: string }).type).toBe('json_schema');
-    expect(body.provider).toEqual({ require_parameters: true });
+    expect(body.response_format).toEqual({ type: 'json_object' });
+    expect(body.provider).toBeUndefined();
+    const messages = body.messages as Array<{ content: string }>;
+    expect(messages[0].content).toContain(
+      JSON.stringify(toStrictJsonSchema(SCHEMA))
+    );
   });
 
   it('mistral mirrors openai strict json_schema but without provider.require_parameters', async () => {

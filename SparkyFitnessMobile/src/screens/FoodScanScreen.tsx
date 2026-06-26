@@ -439,7 +439,7 @@ const FoodScanScreen: React.FC<FoodScanScreenProps> = ({ navigation, route }) =>
       await markFoodPhotoIntroSeen();
       navigation.replace('FoodPhotoFlow', {
         screen: 'Improve',
-        params: { date, photo: { uri: asset.uri } },
+        params: { date, photo: { uri: asset.uri, mimeType: asset.mimeType } },
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to load photo.';

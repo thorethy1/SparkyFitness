@@ -272,14 +272,14 @@ describe('FoodScanScreen', () => {
       });
     });
 
-    it('treats any configured provider (e.g. mistral) as dispatchable: no gate, Photo available', async () => {
-      // Attempt-all: mistral is dispatched server-side, so the gate must NOT
+    it('treats any configured provider (e.g. OpenRouter) as dispatchable: no gate, Photo available', async () => {
+      // Attempt-all: OpenRouter is dispatched server-side, so the gate must NOT
       // show and the Photo capture UI (library button) is available.
       mockUseActiveAiServiceSetting.mockReturnValue({
         data: {
           id: 's',
-          service_name: 'mistral-large',
-          service_type: 'mistral',
+          service_name: 'OpenRouter',
+          service_type: 'openrouter',
           is_active: true,
         },
         isLoading: false,
@@ -478,7 +478,7 @@ describe('FoodScanScreen', () => {
     it('routes a picked photo into the FoodPhotoFlow > Improve screen', async () => {
       mockLaunchLibrary.mockResolvedValue({
         canceled: false,
-        assets: [{ uri: 'file:///picked.jpg' } as any],
+        assets: [{ uri: 'file:///picked.jpg', mimeType: 'image/jpeg' } as any],
       } as any);
 
       const screen = renderScreenWithRoute({ initialMode: 'photo' });
@@ -496,7 +496,10 @@ describe('FoodScanScreen', () => {
       expect(mockMarkSeen).toHaveBeenCalled();
       expect(mockNavigation.replace).toHaveBeenCalledWith('FoodPhotoFlow', {
         screen: 'Improve',
-        params: { date: undefined, photo: { uri: 'file:///picked.jpg' } },
+        params: {
+          date: undefined,
+          photo: { uri: 'file:///picked.jpg', mimeType: 'image/jpeg' },
+        },
       });
     });
 

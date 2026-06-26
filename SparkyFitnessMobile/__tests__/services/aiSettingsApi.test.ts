@@ -112,6 +112,25 @@ describe('aiSettingsApi.fetchActiveAiServiceSetting', () => {
     expect(isFoodPhotoAvailable(result)).toBe(true);
   });
 
+  test('200 with OpenRouter setting parses; isFoodPhotoAvailable=true', async () => {
+    mockGetActiveServerConfig.mockResolvedValue(testConfig);
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      headers: { get: () => null },
+      json: () =>
+        Promise.resolve({
+          id: 's1',
+          service_name: 'OpenRouter',
+          service_type: 'openrouter',
+          is_active: true,
+        }),
+    });
+    const result = await fetchActiveAiServiceSetting();
+    expect(result?.service_type).toBe('openrouter');
+    expect(isFoodPhotoAvailable(result)).toBe(true);
+  });
+
   test('200 with null body returns null (server "not configured" path)', async () => {
     mockGetActiveServerConfig.mockResolvedValue(testConfig);
     mockFetch.mockResolvedValue({
@@ -192,6 +211,7 @@ describe('isFoodPhotoAvailable', () => {
       'mistral',
       'ollama',
       'openrouter',
+      'xai',
       'custom',
       'openai_compatible',
       'groq',

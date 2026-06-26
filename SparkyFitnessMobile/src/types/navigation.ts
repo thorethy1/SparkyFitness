@@ -179,7 +179,7 @@ export type RootStackScreenProps<T extends keyof RootStackParamList> =
 export type FoodPhotoFlowParamList = {
   Improve: {
     date?: string;
-    photo: { uri: string };
+    photo: { uri: string; mimeType?: string };
     initialDescription?: string;
     initialTotalWeight?: string;
     initialWeightUnit?: 'g' | 'oz';
