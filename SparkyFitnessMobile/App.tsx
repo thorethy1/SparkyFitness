@@ -17,6 +17,7 @@ import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Uniwind, useUniwind, useCSSVariable } from 'uniwind';
+import { useTransitionProgress } from 'react-native-screens';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { queryClient, serverConnectionQueryKey, serverConfigsQueryKey, useSyncHealthData } from './src/hooks';
@@ -110,7 +111,7 @@ import { toastConfig } from './src/components/ui/toastConfig';
 import { NON_ADD_TABS, TabsLayout, type NonAddTabName } from './src/components/TabsLayout';
 import { createIOSSmallNativeHeaderOptions } from './src/utils/nativeHeaderItems';
 import { useHeaderActionColors } from './src/hooks/useHeaderActionColors';
-import ActiveWorkoutBar, { navigationRef as rootNavigationRef } from './src/components/ActiveWorkoutBar';
+import ActiveWorkoutBar, { navigationRef as rootNavigationRef, notifyActiveWorkoutBarStackTransition } from './src/components/ActiveWorkoutBar';
 import { withErrorBoundary } from './src/components/ScreenErrorBoundary';
 
 SplashScreen.preventAutoHideAsync();
@@ -173,6 +174,71 @@ function findRouteParams<T extends object>(
 const androidModalAnimation =
   Platform.OS === 'android' ? ({ animation: 'slide_from_bottom' } as const) : {};
 
+function ActiveWorkoutTransitionProgressProbe() {
+  const { progress, closing } = useTransitionProgress();
+  const closingValueRef = useRef(0);
+  const progressValueRef = useRef(0);
+  const maxProgressValueRef = useRef(0);
+  const returningRef = useRef(false);
+  const triggeredRef = useRef(false);
+
+  useEffect(() => {
+    const maybeNotifyClosing = () => {
+      if (closingValueRef.current <= 0.5 || progressValueRef.current <= 0.001) {
+        triggeredRef.current = false;
+        returningRef.current = false;
+        maxProgressValueRef.current = 0;
+        return;
+      }
+
+      if (!triggeredRef.current && !returningRef.current) {
+        triggeredRef.current = true;
+        maxProgressValueRef.current = progressValueRef.current;
+        notifyActiveWorkoutBarStackTransition('start', true);
+      }
+    };
+
+    const closingListener = closing.addListener(({ value }) => {
+      closingValueRef.current = value;
+      maybeNotifyClosing();
+    });
+    const progressListener = progress.addListener(({ value }) => {
+      progressValueRef.current = value;
+      if (triggeredRef.current) {
+        maxProgressValueRef.current = Math.max(maxProgressValueRef.current, value);
+        if (value < maxProgressValueRef.current - 0.025) {
+          triggeredRef.current = false;
+          returningRef.current = true;
+          notifyActiveWorkoutBarStackTransition('end', false);
+        }
+      }
+      maybeNotifyClosing();
+    });
+
+    return () => {
+      closing.removeListener(closingListener);
+      progress.removeListener(progressListener);
+    };
+  }, [closing, progress]);
+
+  return null;
+}
+
+function withActiveWorkoutTransitionProbe<P extends object>(
+  Component: React.ComponentType<P>,
+): React.FC<P> {
+  const ProbedScreen: React.FC<P> = props => (
+    <>
+      <ActiveWorkoutTransitionProgressProbe />
+      <Component {...props} />
+    </>
+  );
+  ProbedScreen.displayName = `WithActiveWorkoutTransitionProbe(${
+    Component.displayName ?? Component.name ?? 'Screen'
+  })`;
+  return ProbedScreen;
+}
+
 // Tab screens — no Go Back (tab bar provides navigation)
 const SafeDashboard = withErrorBoundary(DashboardScreen, 'Dashboard');
 const SafeDiary = withErrorBoundary(DiaryScreen, 'Diary');
@@ -219,6 +285,45 @@ const SafeServerSettings = withErrorBoundary(ServerSettingsScreen, 'ServerSettin
 const SafeAppSettings = withErrorBoundary(AppSettingsScreen, 'AppSettings', { canGoBack: true });
 const SafeAbout = withErrorBoundary(AboutScreen, 'About', { canGoBack: true });
 const SafeWhatsNew = withErrorBoundary(WhatsNewScreen, 'WhatsNew', { canGoBack: true });
+
+const ProbedFoodsLibrary = withActiveWorkoutTransitionProbe(SafeFoodsLibrary);
+const ProbedMealsLibrary = withActiveWorkoutTransitionProbe(SafeMealsLibrary);
+const ProbedExercisesLibrary = withActiveWorkoutTransitionProbe(SafeExercisesLibrary);
+const ProbedWorkoutPresetsLibrary = withActiveWorkoutTransitionProbe(SafeWorkoutPresetsLibrary);
+const ProbedFoodDetail = withActiveWorkoutTransitionProbe(SafeFoodDetail);
+const ProbedMealDetail = withActiveWorkoutTransitionProbe(SafeMealDetail);
+const ProbedExerciseDetail = withActiveWorkoutTransitionProbe(SafeExerciseDetail);
+const ProbedWorkoutPresetDetail = withActiveWorkoutTransitionProbe(SafeWorkoutPresetDetail);
+const ProbedFoodSearch = withActiveWorkoutTransitionProbe(SafeFoodSearch);
+const ProbedFoodEntryAdd = withActiveWorkoutTransitionProbe(SafeFoodEntryAdd);
+const ProbedFoodForm = withActiveWorkoutTransitionProbe(SafeFoodForm);
+const ProbedEditBarcode = withActiveWorkoutTransitionProbe(SafeEditBarcode);
+const ProbedExerciseForm = withActiveWorkoutTransitionProbe(SafeExerciseForm);
+const ProbedWorkoutPresetForm = withActiveWorkoutTransitionProbe(SafeWorkoutPresetForm);
+const ProbedFoodScan = withActiveWorkoutTransitionProbe(SafeFoodScan);
+const ProbedFoodPhotoIntro = withActiveWorkoutTransitionProbe(SafeFoodPhotoIntro);
+const ProbedFoodPhotoFlow = withActiveWorkoutTransitionProbe(FoodPhotoFlow);
+const ProbedMealAdd = withActiveWorkoutTransitionProbe(SafeMealAdd);
+const ProbedFoodEntryView = withActiveWorkoutTransitionProbe(SafeFoodEntryView);
+const ProbedEditLoggedMeal = withActiveWorkoutTransitionProbe(SafeEditLoggedMeal);
+const ProbedMealTypeDetail = withActiveWorkoutTransitionProbe(SafeMealTypeDetail);
+const ProbedExerciseSearch = withActiveWorkoutTransitionProbe(SafeExerciseSearch);
+const ProbedPresetSearch = withActiveWorkoutTransitionProbe(SafePresetSearch);
+const ProbedWorkoutAdd = withActiveWorkoutTransitionProbe(SafeWorkoutAdd);
+const ProbedActivityAdd = withActiveWorkoutTransitionProbe(SafeActivityAdd);
+const ProbedWorkoutDetail = withActiveWorkoutTransitionProbe(SafeWorkoutDetail);
+const ProbedActivityDetail = withActiveWorkoutTransitionProbe(SafeActivityDetail);
+const ProbedFastingDetail = withActiveWorkoutTransitionProbe(SafeFastingDetail);
+const ProbedLogs = withActiveWorkoutTransitionProbe(SafeLogs);
+const ProbedSync = withActiveWorkoutTransitionProbe(SafeSync);
+const ProbedMeasurementsAdd = withActiveWorkoutTransitionProbe(SafeMeasurementsAdd);
+const ProbedCalorieSettings = withActiveWorkoutTransitionProbe(SafeCalorieSettings);
+const ProbedFoodSettings = withActiveWorkoutTransitionProbe(SafeFoodSettings);
+const ProbedDashboardSettings = withActiveWorkoutTransitionProbe(SafeDashboardSettings);
+const ProbedServerSettings = withActiveWorkoutTransitionProbe(SafeServerSettings);
+const ProbedAppSettings = withActiveWorkoutTransitionProbe(SafeAppSettings);
+const ProbedAbout = withActiveWorkoutTransitionProbe(SafeAbout);
+const ProbedWhatsNew = withActiveWorkoutTransitionProbe(SafeWhatsNew);
 
 function AppContent() {
   const { theme } = useUniwind();
@@ -784,6 +889,20 @@ function AppContent() {
         <UniwindInsetsBridge />
         <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
         <Stack.Navigator
+          screenListeners={{
+            beforeRemove: () => {
+              notifyActiveWorkoutBarStackTransition('start', true);
+            },
+            transitionStart: (event) => {
+              notifyActiveWorkoutBarStackTransition('start', Boolean(event.data?.closing));
+            },
+            transitionEnd: (event) => {
+              notifyActiveWorkoutBarStackTransition('end', Boolean(event.data?.closing));
+            },
+            gestureCancel: () => {
+              notifyActiveWorkoutBarStackTransition('end', false);
+            },
+          }}
           screenOptions={{
             headerShown: false,
             animation: 'default',
@@ -808,37 +927,37 @@ function AppContent() {
           </Stack.Screen>
           <Stack.Screen
             name="FoodsLibrary"
-            component={SafeFoodsLibrary}
+            component={ProbedFoodsLibrary}
             options={createStackScreenOptions('Foods', { headerBackTitle: 'Library' })}
           />
           <Stack.Screen
             name="MealsLibrary"
-            component={SafeMealsLibrary}
+            component={ProbedMealsLibrary}
             options={createStackScreenOptions('Meals', { headerBackTitle: 'Library' })}
           />
           <Stack.Screen
             name="ExercisesLibrary"
-            component={SafeExercisesLibrary}
+            component={ProbedExercisesLibrary}
             options={createStackScreenOptions('Exercises', { headerBackTitle: 'Library' })}
           />
           <Stack.Screen
             name="WorkoutPresetsLibrary"
-            component={SafeWorkoutPresetsLibrary}
+            component={ProbedWorkoutPresetsLibrary}
             options={createStackScreenOptions('Workout Presets', { headerBackTitle: 'Library' })}
           />
           <Stack.Screen
             name="WorkoutPresetDetail"
-            component={SafeWorkoutPresetDetail}
+            component={ProbedWorkoutPresetDetail}
             options={({ route }) => createStackScreenOptions(route.params.updatedPreset?.name ?? route.params.preset.name)}
           />
           <Stack.Screen
             name="FoodDetail"
-            component={SafeFoodDetail}
+            component={ProbedFoodDetail}
             options={({ route }) => createStackScreenOptions(route.params.updatedItem?.name ?? route.params.item.name)}
           />
           <Stack.Screen
             name="MealDetail"
-            component={SafeMealDetail}
+            component={ProbedMealDetail}
             options={
               Platform.OS === 'ios'
                 ? {
@@ -854,12 +973,12 @@ function AppContent() {
           />
           <Stack.Screen
             name="ExerciseDetail"
-            component={SafeExerciseDetail}
+            component={ProbedExerciseDetail}
             options={({ route }) => createStackScreenOptions(route.params.updatedItem?.name ?? route.params.item.name)}
           />
           <Stack.Screen
             name="FoodSearch"
-            component={SafeFoodSearch}
+            component={ProbedFoodSearch}
             options={createStackScreenOptions('Add Food', {
               presentation: 'fullScreenModal',
               ...(Platform.OS === 'android' ? androidModalAnimation : {}),
@@ -867,7 +986,7 @@ function AppContent() {
           />
           <Stack.Screen
             name="FoodEntryAdd"
-            component={SafeFoodEntryAdd}
+            component={ProbedFoodEntryAdd}
             options={({ route }) => createStackScreenOptions(route.params.item.name, {
               presentation: 'modal',
               ...(Platform.OS === 'android' ? androidModalAnimation : {}),
@@ -875,7 +994,7 @@ function AppContent() {
           />
           <Stack.Screen
             name="FoodForm"
-            component={SafeFoodForm}
+            component={ProbedFoodForm}
             options={({ route }) => createStackScreenOptions(
               route.params.mode === 'create-food'
                 ? 'New Food'
@@ -890,12 +1009,12 @@ function AppContent() {
           />
           <Stack.Screen
             name="EditBarcode"
-            component={SafeEditBarcode}
+            component={ProbedEditBarcode}
             options={createStackScreenOptions('Barcodes', { headerBackTitle: 'Settings' })}
           />
           <Stack.Screen
             name="ExerciseForm"
-            component={SafeExerciseForm}
+            component={ProbedExerciseForm}
             options={({ route }) => createStackScreenOptions(
               route.params.mode === 'edit-exercise' ? 'Edit Exercise' : 'New Exercise',
               {
@@ -906,7 +1025,7 @@ function AppContent() {
           />
           <Stack.Screen
             name="WorkoutPresetForm"
-            component={SafeWorkoutPresetForm}
+            component={ProbedWorkoutPresetForm}
             options={({ route }) => createStackScreenOptions(
               route.params.mode === 'edit-preset' ? 'Edit Preset' : 'New Preset',
               {
@@ -917,7 +1036,7 @@ function AppContent() {
           />
           <Stack.Screen
             name="FoodScan"
-            component={SafeFoodScan}
+            component={ProbedFoodScan}
             options={createStackScreenOptions('Scan Food', {
               presentation: 'modal',
               ...(Platform.OS === 'android' ? androidModalAnimation : {}),
@@ -925,7 +1044,7 @@ function AppContent() {
           />
           <Stack.Screen
             name="FoodPhotoIntro"
-            component={SafeFoodPhotoIntro}
+            component={ProbedFoodPhotoIntro}
             options={createStackScreenOptions('Photo Food', {
               presentation: 'modal',
               ...(Platform.OS === 'android' ? androidModalAnimation : {}),
@@ -933,7 +1052,7 @@ function AppContent() {
           />
           <Stack.Screen
             name="FoodPhotoFlow"
-            component={FoodPhotoFlow}
+            component={ProbedFoodPhotoFlow}
             options={{
               presentation: 'modal',
               headerShown: false,
@@ -943,7 +1062,7 @@ function AppContent() {
           />
           <Stack.Screen
             name="MealAdd"
-            component={SafeMealAdd}
+            component={ProbedMealAdd}
             options={({ route }) => createStackScreenOptions(
               route.params?.mode === 'edit' ? 'Edit Meal' : 'Create Meal',
               {
@@ -954,44 +1073,44 @@ function AppContent() {
           />
           <Stack.Screen
             name="FoodEntryView"
-            component={SafeFoodEntryView}
+            component={ProbedFoodEntryView}
             options={({ route }) => createStackScreenOptions(route.params.entry.food_name ?? 'Food Entry', { headerBackTitle: 'Diary' })}
           />
           <Stack.Screen
             name="EditLoggedMeal"
-            component={SafeEditLoggedMeal}
+            component={ProbedEditLoggedMeal}
             options={createStackScreenOptions('Edit Meal')}
           />
           <Stack.Screen
             name="MealTypeDetail"
-            component={SafeMealTypeDetail}
+            component={ProbedMealTypeDetail}
             options={({ route }) => createStackScreenOptions(route.params.mealLabel ?? 'Meal', { headerBackTitle: 'Diary' })}
           />
           <Stack.Screen
             name="ExerciseSearch"
-            component={SafeExerciseSearch}
+            component={ProbedExerciseSearch}
             options={createStackScreenOptions('Select Exercise', {
               presentation: 'modal',
             })}
           />
           <Stack.Screen
             name="PresetSearch"
-            component={SafePresetSearch}
+            component={ProbedPresetSearch}
             options={createStackScreenOptions('Workout Presets')}
           />
           <Stack.Screen
             name="WorkoutAdd"
-            component={SafeWorkoutAdd}
+            component={ProbedWorkoutAdd}
             options={({ route }) => createStackScreenOptions(route.params?.session ? 'Edit Workout' : 'New Workout')}
           />
           <Stack.Screen
             name="ActivityAdd"
-            component={SafeActivityAdd}
+            component={ProbedActivityAdd}
             options={({ route }) => createStackScreenOptions(route.params?.entry ? 'Edit Activity' : 'New Activity')}
           />
           <Stack.Screen
             name="WorkoutDetail"
-            component={SafeWorkoutDetail}
+            component={ProbedWorkoutDetail}
             options={({ route }) =>
               Platform.OS === 'ios'
                 ? {
@@ -1008,12 +1127,12 @@ function AppContent() {
           />
           <Stack.Screen
             name="ActivityDetail"
-            component={SafeActivityDetail}
+            component={ProbedActivityDetail}
             options={({ route }) => createStackScreenOptions(route.params.session.name ?? 'Activity', { headerBackTitle: 'Diary' })}
           />
           <Stack.Screen
             name="FastingDetail"
-            component={SafeFastingDetail}
+            component={ProbedFastingDetail}
             options={{
               headerShown: false,
               gestureEnabled: true,
@@ -1021,17 +1140,17 @@ function AppContent() {
           />
           <Stack.Screen
             name="Logs"
-            component={SafeLogs}
+            component={ProbedLogs}
             options={createStackScreenOptions('Logs', { headerBackTitle: 'Settings' })}
           />
           <Stack.Screen
             name="Sync"
-            component={SafeSync}
+            component={ProbedSync}
             options={createStackScreenOptions('Health Sync', { headerBackTitle: 'Settings' })}
           />
           <Stack.Screen
             name="MeasurementsAdd"
-            component={SafeMeasurementsAdd}
+            component={ProbedMeasurementsAdd}
             options={createStackScreenOptions('Measurements', {
               presentation: 'modal',
               ...(Platform.OS === 'android' ? androidModalAnimation : {}),
@@ -1039,37 +1158,37 @@ function AppContent() {
           />
           <Stack.Screen
             name="CalorieSettings"
-            component={SafeCalorieSettings}
+            component={ProbedCalorieSettings}
             options={createStackScreenOptions('Calorie Settings', { headerBackTitle: 'Settings' })}
           />
           <Stack.Screen
             name="FoodSettings"
-            component={SafeFoodSettings}
+            component={ProbedFoodSettings}
             options={createStackScreenOptions('Food Settings', { headerBackTitle: 'Settings' })}
           />
           <Stack.Screen
             name="DashboardSettings"
-            component={SafeDashboardSettings}
+            component={ProbedDashboardSettings}
             options={createStackScreenOptions('Dashboard Settings', { headerBackTitle: 'Settings' })}
           />
           <Stack.Screen
             name="ServerSettings"
-            component={SafeServerSettings}
+            component={ProbedServerSettings}
             options={createStackScreenOptions('Server Settings', { headerBackTitle: 'Settings' })}
           />
           <Stack.Screen
             name="AppSettings"
-            component={SafeAppSettings}
+            component={ProbedAppSettings}
             options={createStackScreenOptions('App Settings', { headerBackTitle: 'Settings' })}
           />
           <Stack.Screen
             name="About"
-            component={SafeAbout}
+            component={ProbedAbout}
             options={createStackScreenOptions('About', { headerBackTitle: 'Settings' })}
           />
           <Stack.Screen
             name="WhatsNew"
-            component={SafeWhatsNew}
+            component={ProbedWhatsNew}
             options={createStackScreenOptions("What's New", { headerBackTitle: 'Settings' })}
           />
         </Stack.Navigator>
