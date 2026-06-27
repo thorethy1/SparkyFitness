@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Platform, Pressable, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useCSSVariable } from 'uniwind';
 
 import Icon from './Icon';
 import { navigationRef } from './ActiveWorkoutBar';
+import LiquidGlassSurface from './LiquidGlassSurface';
 import { useActiveWorkoutStore } from '../stores/activeWorkoutStore';
 import {
   WHATS_NEW_CONTENT_VERSION,
@@ -152,21 +153,25 @@ export const WhatsNewBannerContent: React.FC<
   }
 
   return (
-    <View
-      className="overflow-hidden border"
+    <LiquidGlassSurface
       style={{
         marginHorizontal: GLASS_HORIZONTAL_MARGIN,
         marginBottom: GLASS_VERTICAL_GAP,
         paddingBottom: reserveAddButtonClearance ? FAB_CLEARANCE : 0,
         borderRadius: 999,
         backgroundColor: withAlpha(chrome, Platform.OS === 'ios' ? 0.76 : 0.9),
+        borderWidth: StyleSheet.hairlineWidth,
         borderColor: withAlpha(chromeBorder, 0.82),
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: Platform.OS === 'ios' ? 0.14 : 0.1,
         shadowRadius: 18,
         elevation: 8,
+        overflow: 'hidden',
       }}
+      colorScheme="auto"
+      glassEffectStyle="regular"
+      tintColor={withAlpha(chrome, Platform.OS === 'ios' ? 0.28 : 0.9)}
     >
       <Pressable
         onPress={state.open}
@@ -200,7 +205,7 @@ export const WhatsNewBannerContent: React.FC<
           <Icon name="close" size={18} color={textMuted} weight="bold" />
         </Pressable>
       </Pressable>
-    </View>
+    </LiquidGlassSurface>
   );
 };
 

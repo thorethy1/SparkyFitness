@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
-import { View, Text, Pressable, Alert, Platform } from 'react-native';
+import { View, Text, Pressable, Alert, Platform, StyleSheet } from 'react-native';
 import {
   createNavigationContainerRef,
   type NavigationState,
@@ -20,6 +20,7 @@ import { usePreferences } from '../hooks/usePreferences';
 import { weightFromKg } from '../utils/unitConversions';
 import { shouldUseNativeIOSTabs } from '../utils/nativeTabs';
 import type { RootStackParamList } from '../types/navigation';
+import LiquidGlassSurface from './LiquidGlassSurface';
 
 /**
  * Shared navigation ref — must be passed to the app's `<NavigationContainer ref={...} />`.
@@ -669,14 +670,14 @@ const ActiveWorkoutBar: React.FC<ActiveWorkoutBarProps> = ({
   }
 
   const barBody = (
-    <View
-      className="overflow-hidden border"
+    <LiquidGlassSurface
       style={{
         height: BAR_CONTENT_HEIGHT,
         marginHorizontal: GLASS_HORIZONTAL_MARGIN,
         marginBottom: GLASS_VERTICAL_GAP,
         borderRadius: 999,
         backgroundColor: withAlpha(chrome, Platform.OS === 'ios' ? 0.76 : 0.9),
+        borderWidth: StyleSheet.hairlineWidth,
         borderColor: withAlpha(chromeBorder, 0.82),
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 8 },
@@ -684,7 +685,11 @@ const ActiveWorkoutBar: React.FC<ActiveWorkoutBarProps> = ({
         shadowRadius: 18,
         elevation: 8,
         position: 'relative',
+        overflow: 'hidden',
       }}
+      colorScheme="auto"
+      glassEffectStyle="regular"
+      tintColor={withAlpha(chrome, Platform.OS === 'ios' ? 0.28 : 0.9)}
     >
       {/* Primary row — left control, stacked top/bottom text, right control.
           Intrinsically sized so the bar grows when the bottom line wraps. */}
@@ -769,7 +774,7 @@ const ActiveWorkoutBar: React.FC<ActiveWorkoutBarProps> = ({
           }}
         />
       </View>
-    </View>
+    </LiquidGlassSurface>
   );
 
   return (
