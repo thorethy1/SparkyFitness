@@ -52,15 +52,37 @@ const NATIVE_HEADER_ROOT_ROUTES = {
 const NATIVE_HEADER_ROOT_ROUTE_ITEMS = {
   Chat: {
     screenFile: 'src/screens/ChatScreen.tsx',
-    requiredItems: ['unstable_headerRightItems'],
+    requiredItems: [
+      {
+        nativeSide: 'unstable_headerRightItems',
+        identifier: 'chat-clear',
+        accessibilityLabel: 'Clear chat',
+        onPress: 'handleClear',
+      },
+    ],
   },
   FoodSearch: {
     screenFile: 'src/screens/FoodSearchScreen.tsx',
-    requiredItems: ['unstable_headerLeftItems'],
+    requiredItems: [
+      {
+        nativeSide: 'unstable_headerLeftItems',
+        identifier: 'food-search-close',
+        accessibilityLabel: 'Close',
+        onPress: 'navigation.goBack',
+      },
+    ],
   },
 } satisfies Record<
   keyof typeof NATIVE_HEADER_ROOT_ROUTES,
-  { screenFile: string; requiredItems: string[] }
+  {
+    screenFile: string;
+    requiredItems: {
+      nativeSide: 'unstable_headerLeftItems' | 'unstable_headerRightItems';
+      identifier: string;
+      accessibilityLabel: string;
+      onPress: string;
+    }[];
+  }
 >;
 
 const NATIVE_HEADER_SCREENS_WITH_REACT_HEADER = [
@@ -161,6 +183,23 @@ function hidesReactHeaderOnIOS(source: string): boolean {
   );
 }
 
+function hasNativeHeaderAction(
+  source: string,
+  action: {
+    nativeSide: string;
+    identifier: string;
+    accessibilityLabel: string;
+    onPress: string;
+  },
+): boolean {
+  return (
+    source.includes(action.nativeSide) &&
+    source.includes(`identifier: '${action.identifier}'`) &&
+    source.includes(`accessibilityLabel: '${action.accessibilityLabel}'`) &&
+    source.includes(action.onPress)
+  );
+}
+
 function failNativeHeaderContract(message: string): never {
   throw new Error(
     [
@@ -173,7 +212,7 @@ function failNativeHeaderContract(message: string): never {
       '- Native iOS tab content must stay wrapped in its tab-local createNativeStackNavigator screen so Dashboard, Diary, Library, and Settings get native headers under the Liquid Glass tab path.',
       '- When adding a new native tab, add the TabParamList entry, the NativeTab.Screen entry, the FallbackTab.Screen entry, and a matching tab-local native stack screen with createIOSNativeHeaderOptions.',
       '- When adding a root-stack screen that should use the native iOS header, add it to NATIVE_HEADER_ROOT_ROUTES and register it in App.tsx with createStackScreenOptions(...) or equivalent iOS native-stack options. Do not set headerShown: false for that route.',
-      '- If that native header needs buttons, add the route to NATIVE_HEADER_ROOT_ROUTE_ITEMS and configure the matching unstable_headerLeftItems or unstable_headerRightItems in the screen.',
+      '- If that native header needs buttons, add every screen-owned React header action to NATIVE_HEADER_ROOT_ROUTE_ITEMS with its native side, identifier, accessibility label, and handler. Configure the matching native header item in the screen.',
       '- When adding a new root-stack screen that is intentionally presented above Tabs instead of inside native tabs mode, add it to NATIVE_TABS_ROUTE_EXCLUSIONS with a short reason.',
       '- When a screen configures native header items with unstable_headerRightItems or unstable_headerLeftItems, hide the screen-owned React header on iOS. Use patterns like {Platform.OS !== \'ios\' && <Header />} or const renderHeader = () => Platform.OS === \'ios\' ? null : <Header />. Otherwise iOS shows two headers.',
     ].join('\n'),
@@ -229,11 +268,12 @@ describe('native header navigation contract', () => {
       return !block || /headerShown:\s*false/.test(block);
     });
     const nativeHeaderRoutesMissingItems = Object.entries(NATIVE_HEADER_ROOT_ROUTE_ITEMS)
-      .filter(([, config]) => {
+      .flatMap(([route, config]) => {
         const source = readMobileFile(config.screenFile);
-        return config.requiredItems.some((item) => !source.includes(item));
-      })
-      .map(([route]) => route);
+        return config.requiredItems
+          .filter((action) => !hasNativeHeaderAction(source, action))
+          .map((action) => `${route}.${action.identifier}`);
+      });
 
     if (
       missingNativeTabsRoutes.length > 0 ||
