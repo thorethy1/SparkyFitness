@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -44,6 +44,8 @@ import type { RootStackScreenProps } from '../types/navigation';
 import { formatServingDescription, formatServingUnit } from '../utils/foodDetails';
 import { useProviderColor } from '../utils/providerColor';
 import { interleaveTopMatches } from '../utils/topMatches';
+import { useHeaderActionColors } from '../hooks/useHeaderActionColors';
+import { createNativeHeaderIconButtonItem } from '../utils/nativeHeaderItems';
 
 type FoodSearchScreenProps = RootStackScreenProps<'FoodSearch'>;
 
@@ -108,6 +110,7 @@ const FoodSearchScreen: React.FC<FoodSearchScreenProps> = ({ navigation, route }
     '--color-text-muted',
     '--color-text-secondary',
   ]) as [string, string, string];
+  const { defaultColor: headerActionColor, headerTintColor } = useHeaderActionColors();
   const iconSuccess = String(useCSSVariable('--color-icon-success'));
 
   const { isConnected } = useServerConnection();
@@ -119,6 +122,24 @@ const FoodSearchScreen: React.FC<FoodSearchScreenProps> = ({ navigation, route }
   const [searchText, setSearchText] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [loadingFoodId, setLoadingFoodId] = useState<string | null>(null);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({ headerTintColor });
+
+    if (Platform.OS !== 'ios') return;
+
+    navigation.setOptions({
+      unstable_headerLeftItems: () => [
+        createNativeHeaderIconButtonItem({
+          sfSymbol: 'xmark',
+          identifier: 'food-search-close',
+          tintColor: headerActionColor,
+          accessibilityLabel: 'Close',
+          onPress: () => navigation.goBack(),
+        }),
+      ],
+    });
+  }, [headerActionColor, headerTintColor, navigation]);
 
   // "+" New Food / New Meal menu, anchored under the button.
   const addButtonRef = useRef<View>(null);

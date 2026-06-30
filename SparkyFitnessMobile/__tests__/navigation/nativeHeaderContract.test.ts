@@ -49,6 +49,20 @@ const NATIVE_HEADER_ROOT_ROUTES = {
   FoodSearch: 'Add Food search uses the root native stack header instead of its screen-owned header on iOS.',
 } satisfies Record<string, string>;
 
+const NATIVE_HEADER_ROOT_ROUTE_ITEMS = {
+  Chat: {
+    screenFile: 'src/screens/ChatScreen.tsx',
+    requiredItems: ['unstable_headerRightItems'],
+  },
+  FoodSearch: {
+    screenFile: 'src/screens/FoodSearchScreen.tsx',
+    requiredItems: ['unstable_headerLeftItems'],
+  },
+} satisfies Record<
+  keyof typeof NATIVE_HEADER_ROOT_ROUTES,
+  { screenFile: string; requiredItems: string[] }
+>;
+
 const NATIVE_HEADER_SCREENS_WITH_REACT_HEADER = [
   'src/screens/ChatScreen.tsx',
   'src/screens/ActivityDetailScreen.tsx',
@@ -159,6 +173,7 @@ function failNativeHeaderContract(message: string): never {
       '- Native iOS tab content must stay wrapped in its tab-local createNativeStackNavigator screen so Dashboard, Diary, Library, and Settings get native headers under the Liquid Glass tab path.',
       '- When adding a new native tab, add the TabParamList entry, the NativeTab.Screen entry, the FallbackTab.Screen entry, and a matching tab-local native stack screen with createIOSNativeHeaderOptions.',
       '- When adding a root-stack screen that should use the native iOS header, add it to NATIVE_HEADER_ROOT_ROUTES and register it in App.tsx with createStackScreenOptions(...) or equivalent iOS native-stack options. Do not set headerShown: false for that route.',
+      '- If that native header needs buttons, add the route to NATIVE_HEADER_ROOT_ROUTE_ITEMS and configure the matching unstable_headerLeftItems or unstable_headerRightItems in the screen.',
       '- When adding a new root-stack screen that is intentionally presented above Tabs instead of inside native tabs mode, add it to NATIVE_TABS_ROUTE_EXCLUSIONS with a short reason.',
       '- When a screen configures native header items with unstable_headerRightItems or unstable_headerLeftItems, hide the screen-owned React header on iOS. Use patterns like {Platform.OS !== \'ios\' && <Header />} or const renderHeader = () => Platform.OS === \'ios\' ? null : <Header />. Otherwise iOS shows two headers.',
     ].join('\n'),
@@ -213,13 +228,20 @@ describe('native header navigation contract', () => {
       const block = getStackScreenBlock(appSource, route);
       return !block || /headerShown:\s*false/.test(block);
     });
+    const nativeHeaderRoutesMissingItems = Object.entries(NATIVE_HEADER_ROOT_ROUTE_ITEMS)
+      .filter(([, config]) => {
+        const source = readMobileFile(config.screenFile);
+        return config.requiredItems.some((item) => !source.includes(item));
+      })
+      .map(([route]) => route);
 
     if (
       missingNativeTabsRoutes.length > 0 ||
       staleExclusions.length > 0 ||
       emptyReasons.length > 0 ||
       staleNativeHeaderRoutes.length > 0 ||
-      nativeHeaderRoutesWithHiddenHeader.length > 0
+      nativeHeaderRoutesWithHiddenHeader.length > 0 ||
+      nativeHeaderRoutesMissingItems.length > 0
     ) {
       failNativeHeaderContract(
         [
@@ -228,6 +250,7 @@ describe('native header navigation contract', () => {
           `Native-tabs exclusions missing a reason: ${formatList(emptyReasons)}.`,
           `Stale native-header root route entries: ${formatList(staleNativeHeaderRoutes)}.`,
           `Native-header root routes with headerShown: false or no App.tsx Stack.Screen block: ${formatList(nativeHeaderRoutesWithHiddenHeader)}.`,
+          `Native-header root routes missing required header items: ${formatList(nativeHeaderRoutesMissingItems)}.`,
         ].join('\n'),
       );
     }
