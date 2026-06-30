@@ -55,6 +55,7 @@ npx expo prebuild -c
 - Tabs are `Dashboard`, `Diary`, `Add`, `Library`, and `Settings`. `Add` is a center action in `CustomTabBar`, not a content screen.
 - Native iOS Liquid Glass tabs use `@bottom-tabs/react-navigation` in `src/components/TabsLayout.tsx`; each content tab is wrapped in its own `createNativeStackNavigator` so the tab path still gets native headers.
 - When adding a root-stack screen, add the route to `RootStackParamList` and register a matching `<Stack.Screen>` in `App.tsx` with `createStackScreenOptions(...)` or equivalent explicit iOS native-stack header options.
+- If a root-stack screen should use the native iOS header, document it in `NATIVE_HEADER_ROOT_ROUTES` in `__tests__/navigation/nativeHeaderContract.test.ts`; the test also verifies that `App.tsx` does not hide that native header with `headerShown: false`.
 - If a root-stack screen is intentionally presented above `Tabs` instead of inside native-tabs mode, document it in `NATIVE_TABS_ROUTE_EXCLUSIONS` in `__tests__/navigation/nativeHeaderContract.test.ts` with a short reason.
 - If a screen uses native header items (`unstable_headerRightItems` / `unstable_headerLeftItems`), hide its screen-owned React header on iOS with a guard such as `{Platform.OS !== 'ios' && <Header />}` or `Platform.OS === 'ios' ? null : <Header />`; otherwise iOS renders both headers.
 - When adding a tab, update `TabParamList`, `NativeTab.Screen`, and `FallbackTab.Screen`; for content tabs also add a tab-local native stack screen using `createIOSNativeHeaderOptions(...)`.

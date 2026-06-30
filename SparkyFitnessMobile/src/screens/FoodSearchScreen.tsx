@@ -8,6 +8,7 @@ import {
   SectionList,
   TextInput,
   Keyboard,
+  Platform,
 } from 'react-native';
 import Button from '../components/ui/Button';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -895,15 +896,17 @@ const FoodSearchScreen: React.FC<FoodSearchScreenProps> = ({ navigation, route }
 
   const renderHeaderBar = () => (
     <View className="flex-row items-center px-4 py-2 gap-3">
-      <Button
-        variant="ghost"
-        onPress={() => navigation.goBack()}
-        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        className="p-0"
-        accessibilityLabel="Close"
-      >
-        <Icon name="close" size={22} color={accentColor} />
-      </Button>
+      {Platform.OS !== 'ios' && (
+        <Button
+          variant="ghost"
+          onPress={() => navigation.goBack()}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          className="p-0"
+          accessibilityLabel="Close"
+        >
+          <Icon name="close" size={22} color={accentColor} />
+        </Button>
+      )}
 
       <View
         className="flex-1 flex-row items-center bg-raised rounded-lg px-3"
@@ -1047,7 +1050,10 @@ const FoodSearchScreen: React.FC<FoodSearchScreenProps> = ({ navigation, route }
   };
 
   return (
-    <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
+    <View
+      className="flex-1 bg-background"
+      style={Platform.OS === 'android' ? { paddingTop: insets.top } : undefined}
+    >
       {renderHeaderBar()}
       {renderBody()}
       <AnchoredMenu
