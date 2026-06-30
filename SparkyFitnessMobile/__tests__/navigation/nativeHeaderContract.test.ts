@@ -46,6 +46,24 @@ const NATIVE_TABS_ROUTE_EXCLUSIONS = {
   WhatsNew: 'Root-stack informational route presented above the tab host.',
 } satisfies Record<string, string>;
 
+const NATIVE_HEADER_SCREENS_WITH_REACT_HEADER = [
+  'src/screens/ActivityDetailScreen.tsx',
+  'src/screens/EditBarcodeScreen.tsx',
+  'src/screens/EditLoggedMealScreen.tsx',
+  'src/screens/ExerciseDetailScreen.tsx',
+  'src/screens/ExerciseFormScreen.tsx',
+  'src/screens/FoodDetailScreen.tsx',
+  'src/screens/FoodEntryAddScreen.tsx',
+  'src/screens/FoodEntryViewScreen.tsx',
+  'src/screens/FoodFormScreen.tsx',
+  'src/screens/LogScreen.tsx',
+  'src/screens/MealAddScreen.tsx',
+  'src/screens/MeasurementsAddScreen.tsx',
+  'src/screens/WorkoutDetailScreen.tsx',
+  'src/screens/WorkoutPresetDetailScreen.tsx',
+  'src/screens/WorkoutPresetFormScreen.tsx',
+] as const;
+
 function readMobileFile(relativePath: string): string {
   return fs.readFileSync(path.join(mobileRoot, relativePath), 'utf8');
 }
@@ -87,6 +105,29 @@ function formatList(items: string[]): string {
   return items.length > 0 ? items.join(', ') : 'none';
 }
 
+function hasNativeHeaderItems(source: string): boolean {
+  return /unstable_header(?:Right|Left)Items/.test(source);
+}
+
+function hasPotentialReactHeader(source: string): boolean {
+  return (
+    source.includes('FormScreenChrome') ||
+    /\brenderHeader\b/.test(source) ||
+    /{\s*\/\*\s*Header\s*\*\/\s*}/.test(source) ||
+    /\bListHeader\b/.test(source)
+  );
+}
+
+function hidesReactHeaderOnIOS(source: string): boolean {
+  const formScreenChromeSource = readMobileFile('src/components/FormScreenChrome.tsx');
+  return (
+    /Platform\.OS\s*!==\s*'ios'\s*&&/.test(source) ||
+    /Platform\.OS\s*===\s*'ios'\s*\?\s*null\s*:/.test(source) ||
+    (source.includes('FormScreenChrome') &&
+      /Platform\.OS\s*!==\s*'ios'\s*&&/.test(formScreenChromeSource))
+  );
+}
+
 function failNativeHeaderContract(message: string): never {
   throw new Error(
     [
@@ -99,6 +140,7 @@ function failNativeHeaderContract(message: string): never {
       '- Native iOS tab content must stay wrapped in its tab-local createNativeStackNavigator screen so Dashboard, Diary, Library, and Settings get native headers under the Liquid Glass tab path.',
       '- When adding a new native tab, add the TabParamList entry, the NativeTab.Screen entry, the FallbackTab.Screen entry, and a matching tab-local native stack screen with createIOSNativeHeaderOptions.',
       '- When adding a new root-stack screen that is intentionally presented above Tabs instead of inside native tabs mode, add it to NATIVE_TABS_ROUTE_EXCLUSIONS with a short reason.',
+      '- When a screen configures native header items with unstable_headerRightItems or unstable_headerLeftItems, hide the screen-owned React header on iOS. Use patterns like {Platform.OS !== \'ios\' && <Header />} or const renderHeader = () => Platform.OS === \'ios\' ? null : <Header />. Otherwise iOS shows two headers.',
     ].join('\n'),
   );
 }
@@ -217,6 +259,35 @@ describe('native header navigation contract', () => {
           'Native iOS tab content is not fully wired through tab-local native stacks.',
           `Content tabs missing from NativeTab.Screen: ${formatList(missingContentTabs)}.`,
           `Content tabs missing a ${'<Tab>'}StackScreen with ${'<Tab>'}Stack.Navigator, ${'<Tab>'}Stack.Screen, and a matching native title: ${formatList(missingStackScreens)}.`,
+        ].join('\n'),
+      );
+    }
+  });
+
+  it('hides screen-owned React headers on iOS when native header items are used', () => {
+    const unguardedReactHeaders = NATIVE_HEADER_SCREENS_WITH_REACT_HEADER.filter(
+      (relativePath) => {
+        const source = readMobileFile(relativePath);
+        return !hasNativeHeaderItems(source) || !hidesReactHeaderOnIOS(source);
+      },
+    );
+    const listedFiles = new Set<string>(NATIVE_HEADER_SCREENS_WITH_REACT_HEADER);
+    const unlistedPotentialReactHeaders = fs
+      .readdirSync(path.join(mobileRoot, 'src/screens'))
+      .filter((fileName) => fileName.endsWith('.tsx'))
+      .map((fileName) => `src/screens/${fileName}`)
+      .filter((relativePath) => {
+        if (listedFiles.has(relativePath)) return false;
+        const source = readMobileFile(relativePath);
+        return hasNativeHeaderItems(source) && hasPotentialReactHeader(source);
+      });
+
+    if (unguardedReactHeaders.length > 0 || unlistedPotentialReactHeaders.length > 0) {
+      failNativeHeaderContract(
+        [
+          'Native header items and screen-owned React headers can render at the same time on iOS.',
+          `Screens listed as having both native header items and a React header but missing an iOS suppression guard: ${formatList(unguardedReactHeaders)}.`,
+          `Screens with native header items and a likely React header that are not covered by NATIVE_HEADER_SCREENS_WITH_REACT_HEADER: ${formatList(unlistedPotentialReactHeaders)}.`,
         ].join('\n'),
       );
     }
