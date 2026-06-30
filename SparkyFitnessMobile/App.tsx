@@ -958,7 +958,7 @@ function AppContent() {
           <Stack.Screen
             name="Chat"
             component={SafeChat}
-            options={createStackScreenOptions('Sparky', { headerBackTitle: 'Settings' })}
+            options={createStackScreenOptions('Sparky', { headerBackTitle: 'Dashboard' })}
           />
           <Stack.Screen
             name="MealAdd"
