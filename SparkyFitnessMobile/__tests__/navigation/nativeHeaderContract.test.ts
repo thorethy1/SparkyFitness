@@ -70,6 +70,12 @@ const NATIVE_HEADER_ROOT_ROUTE_ITEMS = {
         accessibilityLabel: 'Close',
         onPress: 'navigation.goBack',
       },
+      {
+        nativeSide: 'unstable_headerRightItems',
+        identifier: 'food-search-add',
+        accessibilityLabel: 'Add Food or Meal',
+        onPress: 'handleAddPress',
+      },
     ],
   },
 } satisfies Record<
@@ -195,7 +201,8 @@ function hasNativeHeaderAction(
   return (
     source.includes(action.nativeSide) &&
     source.includes(`identifier: '${action.identifier}'`) &&
-    source.includes(`accessibilityLabel: '${action.accessibilityLabel}'`) &&
+    source.includes('accessibilityLabel:') &&
+    source.includes(`'${action.accessibilityLabel}'`) &&
     source.includes(action.onPress)
   );
 }

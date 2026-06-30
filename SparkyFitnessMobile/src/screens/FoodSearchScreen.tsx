@@ -9,6 +9,7 @@ import {
   TextInput,
   Keyboard,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
 import Button from '../components/ui/Button';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -105,6 +106,7 @@ const FoodSearchScreen: React.FC<FoodSearchScreenProps> = ({ navigation, route }
   const pickerMode = route.params?.pickerMode ?? 'log-entry';
   const isMealBuilderMode = pickerMode === 'meal-builder';
   const insets = useSafeAreaInsets();
+  const { width: windowWidth } = useWindowDimensions();
   const [accentColor, textMuted, textSecondary] = useCSSVariable([
     '--color-accent-primary',
     '--color-text-muted',
@@ -122,24 +124,6 @@ const FoodSearchScreen: React.FC<FoodSearchScreenProps> = ({ navigation, route }
   const [searchText, setSearchText] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [loadingFoodId, setLoadingFoodId] = useState<string | null>(null);
-
-  useLayoutEffect(() => {
-    navigation.setOptions({ headerTintColor });
-
-    if (Platform.OS !== 'ios') return;
-
-    navigation.setOptions({
-      unstable_headerLeftItems: () => [
-        createNativeHeaderIconButtonItem({
-          sfSymbol: 'xmark',
-          identifier: 'food-search-close',
-          tintColor: headerActionColor,
-          accessibilityLabel: 'Close',
-          onPress: () => navigation.goBack(),
-        }),
-      ],
-    });
-  }, [headerActionColor, headerTintColor, navigation]);
 
   // "+" New Food / New Meal menu, anchored under the button.
   const addButtonRef = useRef<View>(null);
@@ -312,11 +296,54 @@ const FoodSearchScreen: React.FC<FoodSearchScreenProps> = ({ navigation, route }
       openCreateFood();
       return;
     }
+    if (Platform.OS === 'ios') {
+      setMenuAnchor({
+        x: windowWidth - 48,
+        y: insets.top,
+        width: 36,
+        height: 36,
+      });
+      setMenuVisible(true);
+      return;
+    }
     addButtonRef.current?.measureInWindow((x, y, width, height) => {
       setMenuAnchor({ x, y, width, height });
       setMenuVisible(true);
     });
-  }, [isMealBuilderMode, openCreateFood]);
+  }, [insets.top, isMealBuilderMode, openCreateFood, windowWidth]);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({ headerTintColor });
+
+    if (Platform.OS !== 'ios') return;
+
+    navigation.setOptions({
+      unstable_headerLeftItems: () => [
+        createNativeHeaderIconButtonItem({
+          sfSymbol: 'xmark',
+          identifier: 'food-search-close',
+          tintColor: headerActionColor,
+          accessibilityLabel: 'Close',
+          onPress: () => navigation.goBack(),
+        }),
+      ],
+      unstable_headerRightItems: () => [
+        createNativeHeaderIconButtonItem({
+          sfSymbol: 'plus',
+          identifier: 'food-search-add',
+          tintColor: headerActionColor,
+          accessibilityLabel: isMealBuilderMode ? 'Add Food' : 'Add Food or Meal',
+          onPress: handleAddPress,
+        }),
+      ],
+    });
+  }, [
+    handleAddPress,
+    headerActionColor,
+    headerTintColor,
+    isMealBuilderMode,
+    navigation,
+  ]);
 
   const handleExternalFoodTap = useCallback(
     async (item: ExternalFoodItem, explicitProviderId?: string) => {
@@ -981,17 +1008,19 @@ const FoodSearchScreen: React.FC<FoodSearchScreenProps> = ({ navigation, route }
         )}
       </View>
 
-      <View ref={addButtonRef} collapsable={false}>
-        <Button
-          variant="ghost"
-          onPress={handleAddPress}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          className="p-0"
-          accessibilityLabel={isMealBuilderMode ? 'Add Food' : 'Add Food or Meal'}
-        >
-          <Icon name="add" size={26} color={accentColor} />
-        </Button>
-      </View>
+      {Platform.OS !== 'ios' && (
+        <View ref={addButtonRef} collapsable={false}>
+          <Button
+            variant="ghost"
+            onPress={handleAddPress}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            className="p-0"
+            accessibilityLabel={isMealBuilderMode ? 'Add Food' : 'Add Food or Meal'}
+          >
+            <Icon name="add" size={26} color={accentColor} />
+          </Button>
+        </View>
+      )}
     </View>
   );
 
