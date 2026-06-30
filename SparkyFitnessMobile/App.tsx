@@ -875,6 +875,7 @@ function AppContent() {
             name="FoodSearch"
             component={SafeFoodSearch}
             options={createStackScreenOptions('Add Food', {
+              headerBackTitle: 'Back',
               presentation: 'fullScreenModal',
               ...(Platform.OS === 'android' ? androidModalAnimation : {}),
             })}

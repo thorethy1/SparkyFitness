@@ -56,7 +56,7 @@ npx expo prebuild -c
 - Native iOS Liquid Glass tabs use `@bottom-tabs/react-navigation` in `src/components/TabsLayout.tsx`; each content tab is wrapped in its own `createNativeStackNavigator` so the tab path still gets native headers.
 - When adding a root-stack screen, add the route to `RootStackParamList` and register a matching `<Stack.Screen>` in `App.tsx` with `createStackScreenOptions(...)` or equivalent explicit iOS native-stack header options.
 - If a root-stack screen should use the native iOS header, document it in `NATIVE_HEADER_ROOT_ROUTES` in `__tests__/navigation/nativeHeaderContract.test.ts`; the test also verifies that `App.tsx` does not hide that native header with `headerShown: false`.
-- If a native-header root route needs a stable iOS back-button label, document it in `NATIVE_HEADER_ROOT_ROUTE_BACK_TITLES` and keep `App.tsx` `headerBackTitle` aligned.
+- Native-header root routes must set `headerBackTitle` in `App.tsx` so iOS does not inherit a stale or misleading back-button label.
 - If that native header needs buttons, document each mirrored React-header action in `NATIVE_HEADER_ROOT_ROUTE_ITEMS` with native side, identifier, accessibility label, and handler so missing native buttons fail tests.
 - If a root-stack screen is intentionally presented above `Tabs` instead of inside native-tabs mode, document it in `NATIVE_TABS_ROUTE_EXCLUSIONS` in `__tests__/navigation/nativeHeaderContract.test.ts` with a short reason.
 - If a screen uses native header items (`unstable_headerRightItems` / `unstable_headerLeftItems`), hide its screen-owned React header on iOS with a guard such as `{Platform.OS !== 'ios' && <Header />}` or `Platform.OS === 'ios' ? null : <Header />`; otherwise iOS renders both headers.

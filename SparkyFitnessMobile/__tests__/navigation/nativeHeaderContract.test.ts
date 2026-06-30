@@ -49,10 +49,6 @@ const NATIVE_HEADER_ROOT_ROUTES = {
   FoodSearch: 'Add Food search uses the root native stack header instead of its screen-owned header on iOS.',
 } satisfies Record<string, string>;
 
-const NATIVE_HEADER_ROOT_ROUTE_BACK_TITLES = {
-  Chat: 'Dashboard',
-} satisfies Partial<Record<keyof typeof NATIVE_HEADER_ROOT_ROUTES, string>>;
-
 const NATIVE_HEADER_ROOT_ROUTE_ITEMS = {
   Chat: {
     screenFile: 'src/screens/ChatScreen.tsx',
@@ -223,7 +219,7 @@ function failNativeHeaderContract(message: string): never {
       '- Native iOS tab content must stay wrapped in its tab-local createNativeStackNavigator screen so Dashboard, Diary, Library, and Settings get native headers under the Liquid Glass tab path.',
       '- When adding a new native tab, add the TabParamList entry, the NativeTab.Screen entry, the FallbackTab.Screen entry, and a matching tab-local native stack screen with createIOSNativeHeaderOptions.',
       '- When adding a root-stack screen that should use the native iOS header, add it to NATIVE_HEADER_ROOT_ROUTES and register it in App.tsx with createStackScreenOptions(...) or equivalent iOS native-stack options. Do not set headerShown: false for that route.',
-      '- If a native-header root route needs a stable iOS back-button label, add it to NATIVE_HEADER_ROOT_ROUTE_BACK_TITLES and set the matching headerBackTitle in App.tsx.',
+      '- Native-header root routes must set headerBackTitle in App.tsx so the iOS back button does not inherit a stale or misleading label.',
       '- If that native header needs buttons, add every screen-owned React header action to NATIVE_HEADER_ROOT_ROUTE_ITEMS with its native side, identifier, accessibility label, and handler. Configure the matching native header item in the screen.',
       '- When adding a new root-stack screen that is intentionally presented above Tabs instead of inside native tabs mode, add it to NATIVE_TABS_ROUTE_EXCLUSIONS with a short reason.',
       '- When a screen configures native header items with unstable_headerRightItems or unstable_headerLeftItems, hide the screen-owned React header on iOS. Use patterns like {Platform.OS !== \'ios\' && <Header />} or const renderHeader = () => Platform.OS === \'ios\' ? null : <Header />. Otherwise iOS shows two headers.',
@@ -279,14 +275,12 @@ describe('native header navigation contract', () => {
       const block = getStackScreenBlock(appSource, route);
       return !block || /headerShown:\s*false/.test(block);
     });
-    const nativeHeaderRoutesWithWrongBackTitle = Object.entries(
-      NATIVE_HEADER_ROOT_ROUTE_BACK_TITLES,
-    )
-      .filter(([route, expectedBackTitle]) => {
+    const nativeHeaderRoutesMissingBackTitle = Object.keys(NATIVE_HEADER_ROOT_ROUTES).filter(
+      (route) => {
         const block = getStackScreenBlock(appSource, route);
-        return !block || !block.includes(`headerBackTitle: '${expectedBackTitle}'`);
-      })
-      .map(([route, expectedBackTitle]) => `${route} expected "${expectedBackTitle}"`);
+        return !block || !/headerBackTitle\s*:/.test(block);
+      },
+    );
     const nativeHeaderRoutesMissingItems = Object.entries(NATIVE_HEADER_ROOT_ROUTE_ITEMS)
       .flatMap(([route, config]) => {
         const source = readMobileFile(config.screenFile);
@@ -301,7 +295,7 @@ describe('native header navigation contract', () => {
       emptyReasons.length > 0 ||
       staleNativeHeaderRoutes.length > 0 ||
       nativeHeaderRoutesWithHiddenHeader.length > 0 ||
-      nativeHeaderRoutesWithWrongBackTitle.length > 0 ||
+      nativeHeaderRoutesMissingBackTitle.length > 0 ||
       nativeHeaderRoutesMissingItems.length > 0
     ) {
       failNativeHeaderContract(
@@ -311,7 +305,7 @@ describe('native header navigation contract', () => {
           `Native-tabs exclusions missing a reason: ${formatList(emptyReasons)}.`,
           `Stale native-header root route entries: ${formatList(staleNativeHeaderRoutes)}.`,
           `Native-header root routes with headerShown: false or no App.tsx Stack.Screen block: ${formatList(nativeHeaderRoutesWithHiddenHeader)}.`,
-          `Native-header root routes with wrong headerBackTitle: ${formatList(nativeHeaderRoutesWithWrongBackTitle)}.`,
+          `Native-header root routes missing headerBackTitle: ${formatList(nativeHeaderRoutesMissingBackTitle)}.`,
           `Native-header root routes missing required header items: ${formatList(nativeHeaderRoutesMissingItems)}.`,
         ].join('\n'),
       );
