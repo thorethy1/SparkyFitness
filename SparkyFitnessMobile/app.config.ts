@@ -6,10 +6,10 @@ const { getIosAppGroup } = require('./app.identifiers.js');
 const APP_NAME = 'SparkyFitness';
 const APP_SLUG = 'sparkyfitnessmobile';
 const ANDROID_PROD_BUNDLE_IDENTIFIER = 'com.SparkyApps.SparkyFitnessMobile';
-const IOS_PROD_BUNDLE_IDENTIFIER = 'com.SparkyApps.SparkyFitnessMobile';
-const DEV_APPLE_TEAM_ID = process.env.EXPO_DEV_APPLE_TEAM_ID || '';
-const PROD_APPLE_TEAM_ID = process.env.EXPO_PROD_APPLE_TEAM_ID || '';
-const DEV_BUNDLE_IDENTIFIER = process.env.EXPO_DEV_BUNDLE_IDENTIFIER || 'org.SparkyApps.SparkyFitnessMobile.dev';
+const IOS_PROD_BUNDLE_IDENTIFIER = 'app.sweetpotato2633.coral4840';
+const DEV_APPLE_TEAM_ID = process.env.EXPO_DEV_APPLE_TEAM_ID || 'GYA6B57RGG';
+const PROD_APPLE_TEAM_ID = process.env.EXPO_PROD_APPLE_TEAM_ID || 'GYA6B57RGG';
+const DEV_BUNDLE_IDENTIFIER = process.env.EXPO_DEV_BUNDLE_IDENTIFIER || 'app.sweetpotato2633.coral4840';
 
 const DEV_PACKAGE = DEV_BUNDLE_IDENTIFIER;
 const PROD_PACKAGE = ANDROID_PROD_BUNDLE_IDENTIFIER;
@@ -143,7 +143,6 @@ export default ({ config }: ConfigContext): Partial<ExpoConfig> => {
     plugins: [
       ...(config.plugins ?? []),
       './plugins/withGlanceAndroidSupport',
-      './plugins/withCalorieWidget',
       './plugins/withEnrichedMarkdownNoMath',
       ...(!isDev ? prodPlugins : []),
     ],
@@ -152,7 +151,7 @@ export default ({ config }: ConfigContext): Partial<ExpoConfig> => {
       APP_VARIANT: environment,
       iosAppGroup: getIosAppGroup(),
       eas: {
-        projectId: "498a86c5-344f-4d2c-9033-dfd720e4a383",
+        projectId: "4551af79-1f16-4c11-87d9-629093b5d472",
       },
     },
   };
