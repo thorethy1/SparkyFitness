@@ -73,3 +73,9 @@ dossier sans titre/
 # Nix build outputs
 /result
 /result-*
+
+# Local mobile signing / EAS build artifacts
+SparkyFitnessMobile/credentials.json
+SparkyFitnessMobile/ios-signing/
+SparkyFitnessMobile/targets/
+SparkyFitnessMobile/SparkyFitness
