@@ -44,6 +44,7 @@ import type {
 } from '../types/foodUnitVariants';
 import {
   createFoodVariant,
+  fetchFoodVariants,
   type CreateFoodVariantPayload,
 } from '../services/api/foodsApi';
 import {
@@ -78,8 +79,10 @@ const FORM_DRAFT_UNIT_ID = '__food-form-draft-unit__';
 
 /**
  * Persist all external (Yazio) variants as food_variants in the DB,
- * skipping the variant that was already created as default_variant.
- * This ensures every serving size from the provider is available in the app.
+ * skipping the variant that was already created as default_variant
+ * AND any variant that already exists for this food (idempotent).
+ * This ensures every serving size from the provider is available in the app
+ * without creating duplicates on re-save.
  */
 async function persistExternalVariants(
   savedFood: { id: string; default_variant?: { serving_size?: number; serving_unit?: string } },
@@ -87,13 +90,25 @@ async function persistExternalVariants(
 ) {
   if (!externalVariants || externalVariants.length === 0) return;
 
+  // Fetch existing variants to avoid creating duplicates
+  let existingKeys = new Set<string>();
+  try {
+    const existing = await fetchFoodVariants(savedFood.id);
+    existingKeys = new Set(existing.map(v => `${v.serving_size}:${v.serving_unit}`));
+  } catch {
+    // If we can't check existing variants, proceed without dedup
+    // (a few duplicate variants are preferable to missing ones)
+  }
+
   const defaultKey = `${savedFood.default_variant?.serving_size}:${savedFood.default_variant?.serving_unit}`;
 
   await Promise.all(
     externalVariants.map(async (ev) => {
-      // Skip the default variant — it's already saved
       const key = `${ev.serving_size}:${ev.serving_unit}`;
+      // Skip the default variant — it's already saved as the food's default
       if (key === defaultKey) return;
+      // Skip variants that already exist in the DB (idempotent re-save)
+      if (existingKeys.has(key)) return;
 
       try {
         await createFoodVariant({
