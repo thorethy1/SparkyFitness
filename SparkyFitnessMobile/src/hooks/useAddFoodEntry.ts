@@ -9,10 +9,13 @@ import {
 import { createFoodEntry, type CreateFoodEntryPayload } from '../services/api/foodEntriesApi';
 import { dailySummaryQueryKey, foodsQueryKey, recentMealsQueryKeyRoot } from './queryKeys';
 import type { FoodEntry } from '../types/foodEntries';
+import type { ExternalFoodVariant } from '../types/externalFoods';
+import { persistExternalVariants } from '../utils/persistExternalVariants';
 
 export interface AddFoodEntryInput {
   saveFoodPayload?: SaveFoodPayload;
   saveThenCreateVariantPayload?: Omit<CreateFoodVariantPayload, 'food_id'>;
+  externalVariants?: ExternalFoodVariant[];
   createEntryPayload: CreateFoodEntryPayload;
 }
 
@@ -43,6 +46,8 @@ export function useAddFoodEntry(options?: UseAddFoodEntryOptions) {
         if (!variantId) {
           throw new Error('Server did not return a variant ID for the saved food');
         }
+
+        await persistExternalVariants(saved, input.externalVariants);
 
         return createFoodEntry({
           ...input.createEntryPayload,
