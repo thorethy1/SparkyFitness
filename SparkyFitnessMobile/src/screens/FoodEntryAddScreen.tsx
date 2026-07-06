@@ -723,6 +723,10 @@ const FoodEntryAddScreen: React.FC<FoodEntryAddScreenProps> = ({
     () => ({
       name: adjustedValues?.name || activeItem.name,
       brand: adjustedValues?.brand ?? activeItem.brand ?? null,
+      barcode: activeItem.barcode ?? null,
+      provider_type: activeItem.provider_type ?? null,
+      provider_external_id: activeItem.provider_external_id ?? null,
+      is_custom: activeItem.is_custom ?? true,
       serving_size: saveFoodSourceValues.servingSize,
       serving_unit: saveFoodSourceValues.servingUnit,
       calories: saveFoodSourceValues.calories,
@@ -741,7 +745,7 @@ const FoodEntryAddScreen: React.FC<FoodEntryAddScreenProps> = ({
       vitamin_a: saveFoodSourceValues.vitaminA,
       vitamin_c: saveFoodSourceValues.vitaminC,
     }),
-    [activeItem.brand, activeItem.name, adjustedValues, saveFoodSourceValues],
+    [activeItem.barcode, activeItem.brand, activeItem.is_custom, activeItem.name, activeItem.provider_external_id, activeItem.provider_type, adjustedValues, saveFoodSourceValues],
   );
 
   const {
