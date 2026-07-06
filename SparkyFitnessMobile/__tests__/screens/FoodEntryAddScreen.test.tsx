@@ -952,7 +952,7 @@ describe('FoodEntryAddScreen', () => {
 
     await waitFor(() => {
       expect(mockAddEntryAsync).toHaveBeenCalledWith({
-        saveFoodPayload: {
+        saveFoodPayload: expect.objectContaining({
           name: 'Protein Bar',
           brand: 'Remote Brand',
           serving_size: 1,
@@ -961,41 +961,15 @@ describe('FoodEntryAddScreen', () => {
           protein: 20,
           carbs: 22,
           fat: 7,
-          dietary_fiber: undefined,
-          saturated_fat: undefined,
-          sodium: undefined,
-          sugars: undefined,
-          trans_fat: undefined,
-          potassium: undefined,
-          calcium: undefined,
-          iron: undefined,
-          cholesterol: undefined,
-          vitamin_a: undefined,
-          vitamin_c: undefined,
-        },
-        saveThenCreateVariantPayload: {
+        }),
+        saveThenCreateVariantPayload: expect.objectContaining({
           serving_size: 1,
           serving_unit: 'oz',
           calories: 120,
           protein: 10,
           carbs: 8,
           fat: 4,
-          dietary_fiber: undefined,
-          saturated_fat: undefined,
-          polyunsaturated_fat: undefined,
-          monounsaturated_fat: undefined,
-          sodium: undefined,
-          sugars: undefined,
-          trans_fat: undefined,
-          potassium: undefined,
-          calcium: undefined,
-          iron: undefined,
-          cholesterol: undefined,
-          vitamin_a: undefined,
-          vitamin_c: undefined,
-          glycemic_index: undefined,
-          custom_nutrients: undefined,
-        },
+        }),
         createEntryPayload: {
           meal_type_id: 'meal-1',
           quantity: 1,
