@@ -11,6 +11,19 @@
             "developmentClient": true,
             "distribution": "internal"
         },
+        "signed-dev": {
+            "env": {
+                "APP_VARIANT": "development",
+                "EXPO_DEV_BUNDLE_IDENTIFIER": "app.sweetpotato2633.coral4840",
+                "EXPO_DEV_APPLE_TEAM_ID": "GYA6B57RGG",
+                "EXPO_IOS_APP_GROUP_DEV": "group.6827d1df5271d2c4.5"
+            },
+            "distribution": "internal",
+            "credentialsSource": "local",
+            "ios": {
+                "resourceClass": "medium"
+            }
+        },
         "preview": {
             "env": {
                 "APP_VARIANT": "preview"
