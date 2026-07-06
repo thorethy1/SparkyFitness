@@ -95,6 +95,18 @@ async function createFood(authenticatedUserId: any, foodData: any) {
         return existingFood;
       }
     }
+    // Dedup by provider (e.g. Yazio product ID) — catches duplicate saves of
+    // the same external food even when no barcode is present on the package.
+    if (foodData.provider_external_id && foodData.provider_type) {
+      const existingFood = await foodRepository.findFoodByProviderExternalId(
+        authenticatedUserId,
+        foodData.provider_external_id,
+        foodData.provider_type
+      );
+      if (existingFood) {
+        return existingFood;
+      }
+    }
     const newFood = await foodRepository.createFood({
       ...foodData,
       glycemic_index: foodData.glycemic_index || null,

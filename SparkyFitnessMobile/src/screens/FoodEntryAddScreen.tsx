@@ -44,6 +44,7 @@ import type {
 } from '../types/foodUnitVariants';
 import {
   createFoodVariant,
+  fetchFoodVariants,
   type CreateFoodVariantPayload,
 } from '../services/api/foodsApi';
 import {
@@ -75,6 +76,68 @@ type FoodEntryAddScreenProps = RootStackScreenProps<'FoodEntryAdd'>;
 const EXTERNAL_DRAFT_VARIANT_ID = '__draft-external-unit__';
 // Sentinel written by FoodForm for AI-converted draft units; never a real DB ID.
 const FORM_DRAFT_UNIT_ID = '__food-form-draft-unit__';
+
+/**
+ * Persist all external (Yazio) variants as food_variants in the DB,
+ * skipping the variant that was already created as default_variant
+ * AND any variant that already exists for this food (idempotent).
+ * This ensures every serving size from the provider is available in the app
+ * without creating duplicates on re-save.
+ */
+async function persistExternalVariants(
+  savedFood: { id: string; default_variant?: { serving_size?: number; serving_unit?: string } },
+  externalVariants: { serving_size: number; serving_unit: string; calories: number; protein: number; carbs: number; fat: number; saturated_fat?: number; sodium?: number; fiber?: number; sugars?: number; trans_fat?: number; potassium?: number; calcium?: number; iron?: number; cholesterol?: number; vitamin_a?: number; vitamin_c?: number }[] | undefined,
+) {
+  if (!externalVariants || externalVariants.length === 0) return;
+
+  // Fetch existing variants to avoid creating duplicates
+  let existingKeys = new Set<string>();
+  try {
+    const existing = await fetchFoodVariants(savedFood.id);
+    existingKeys = new Set(existing.map(v => `${v.serving_size}:${v.serving_unit}`));
+  } catch {
+    // If we can't check existing variants, proceed without dedup
+    // (a few duplicate variants are preferable to missing ones)
+  }
+
+  const defaultKey = `${savedFood.default_variant?.serving_size}:${savedFood.default_variant?.serving_unit}`;
+
+  await Promise.all(
+    externalVariants.map(async (ev) => {
+      const key = `${ev.serving_size}:${ev.serving_unit}`;
+      // Skip the default variant — it's already saved as the food's default
+      if (key === defaultKey) return;
+      // Skip variants that already exist in the DB (idempotent re-save)
+      if (existingKeys.has(key)) return;
+
+      try {
+        await createFoodVariant({
+          food_id: savedFood.id,
+          serving_size: ev.serving_size,
+          serving_unit: ev.serving_unit,
+          calories: ev.calories,
+          protein: ev.protein,
+          carbs: ev.carbs,
+          fat: ev.fat,
+          saturated_fat: ev.saturated_fat,
+          sodium: ev.sodium,
+          dietary_fiber: ev.fiber,
+          sugars: ev.sugars,
+          trans_fat: ev.trans_fat,
+          potassium: ev.potassium,
+          calcium: ev.calcium,
+          iron: ev.iron,
+          cholesterol: ev.cholesterol,
+          vitamin_a: ev.vitamin_a,
+          vitamin_c: ev.vitamin_c,
+        } as CreateFoodVariantPayload);
+      } catch {
+        // Non-blocking: a variant failing shouldn't prevent logging the food
+      }
+    }),
+  );
+}
+
 const NUTRITION_FIELDS = [
   'fiber',
   'saturatedFat',
@@ -660,6 +723,10 @@ const FoodEntryAddScreen: React.FC<FoodEntryAddScreenProps> = ({
     () => ({
       name: adjustedValues?.name || activeItem.name,
       brand: adjustedValues?.brand ?? activeItem.brand ?? null,
+      barcode: activeItem.barcode ?? null,
+      provider_type: activeItem.provider_type ?? null,
+      provider_external_id: activeItem.provider_external_id ?? null,
+      is_custom: activeItem.is_custom ?? true,
       serving_size: saveFoodSourceValues.servingSize,
       serving_unit: saveFoodSourceValues.servingUnit,
       calories: saveFoodSourceValues.calories,
@@ -678,7 +745,7 @@ const FoodEntryAddScreen: React.FC<FoodEntryAddScreenProps> = ({
       vitamin_a: saveFoodSourceValues.vitaminA,
       vitamin_c: saveFoodSourceValues.vitaminC,
     }),
-    [activeItem.brand, activeItem.name, adjustedValues, saveFoodSourceValues],
+    [activeItem.barcode, activeItem.brand, activeItem.is_custom, activeItem.name, activeItem.provider_external_id, activeItem.provider_type, adjustedValues, saveFoodSourceValues],
   );
 
   const {
@@ -912,6 +979,11 @@ const FoodEntryAddScreen: React.FC<FoodEntryAddScreenProps> = ({
               values: displayValues,
             }),
           );
+        // Persist all external (Yazio) variants after initial save
+          persistExternalVariants(
+            savedFood,
+            activeItem.externalVariants,
+          );
         } catch {
           Toast.show({
             type: 'error',
@@ -953,6 +1025,9 @@ const FoodEntryAddScreen: React.FC<FoodEntryAddScreenProps> = ({
           });
         }
       }
+
+      // Persist all external (Yazio) variants after initial save
+      persistExternalVariants(savedFood, activeItem.externalVariants);
 
       setSavedFoodOverride(savedFoodInfo);
       setSelectedVariantOverride(nextVariantOverride);
