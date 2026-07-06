@@ -3,7 +3,7 @@ import { View, Text } from 'react-native';
 import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
 import { useCSSVariable } from 'uniwind';
 import Button from './ui/Button';
-import Icon from './Icon';
+import VerifiedBadge from './VerifiedBadge';
 import { buildNutrientDisplayList, type NutrientDisplayItem } from '../types/foodInfo';
 import type { FoodDisplayValues } from '../utils/foodDetails';
 import NutritionMacroCard, { type NutritionGoalPercentages } from './NutritionMacroCard';
@@ -40,7 +40,6 @@ const FoodNutritionSummary: React.FC<FoodNutritionSummaryProps> = ({
   customNutrients,
 }) => {
   const accentColor = useCSSVariable('--color-accent-primary') as string;
-  const iconSuccess = String(useCSSVariable('--color-icon-success'));
   const { isConnected } = useServerConnection();
   const { customNutrients: customNutrientDefs } = useCustomNutrients({ enabled: isConnected });
 
@@ -111,9 +110,7 @@ const FoodNutritionSummary: React.FC<FoodNutritionSummaryProps> = ({
       <View>
         <View className="flex-row items-center gap-1">
           <Text className="text-text-primary text-3xl font-bold">{name}</Text>
-          {provider_verified ? (
-            <Icon name="checkmark" size={16} color={iconSuccess} />
-          ) : null}
+          {provider_verified ? <VerifiedBadge size="md" /> : null}
         </View>
         {brand ? (
           <Text className="text-text-secondary text-base mt-1">{brand}</Text>

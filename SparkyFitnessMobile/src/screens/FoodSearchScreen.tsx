@@ -15,6 +15,7 @@ import Button from '../components/ui/Button';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCSSVariable } from 'uniwind';
 import Icon from '../components/Icon';
+import VerifiedBadge from '../components/VerifiedBadge';
 import MealLibraryRow from '../components/MealLibraryRow';
 import BottomSheetPicker from '../components/BottomSheetPicker';
 import AnchoredMenu, { AnchorRect } from '../components/AnchoredMenu';
@@ -119,7 +120,6 @@ const FoodSearchScreen: React.FC<FoodSearchScreenProps> = ({ navigation, route }
     '--color-text-secondary',
   ]) as [string, string, string];
   const { defaultColor: headerActionColor, saveColor: headerSaveColor } = useHeaderActionColors();
-  const iconSuccess = String(useCSSVariable('--color-icon-success'));
   const usesNativeHeader = useNativeIOSHeadersActive();
 
   const { isConnected } = useServerConnection();
@@ -724,9 +724,7 @@ const FoodSearchScreen: React.FC<FoodSearchScreenProps> = ({ navigation, route }
         <View className="flex-1 mr-3">
           <View className="flex-row items-center gap-1">
             <Text className="text-text-primary text-base font-medium">{item.name}</Text>
-            {item.provider_verified ? (
-              <Icon name="checkmark" size={14} color={iconSuccess} />
-            ) : null}
+            {item.provider_verified ? <VerifiedBadge size="sm" /> : null}
           </View>
           {badge || item.brand ? (
             <View className="flex-row items-center gap-1.5 mt-0.5">
