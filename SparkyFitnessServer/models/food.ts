@@ -915,7 +915,7 @@ async function findFoodByProviderExternalId(
   try {
     const result = await client.query(
       `SELECT f.id, f.name, f.brand, f.barcode, f.is_custom, f.user_id, f.shared_with_public, f.provider_external_id, f.provider_type,
-              ${DEFAULT_VARIANT_JSON_SQL} AS default_variant
+              ${DEFAULT_VARIANT_JSON_SQL}
        FROM foods f
        ${PREFERRED_DEFAULT_VARIANT_JOIN_SQL}
        WHERE f.provider_external_id = $1
