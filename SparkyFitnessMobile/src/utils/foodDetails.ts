@@ -150,7 +150,7 @@ export function unitVariantToDisplayValues(variant: FoodUnitVariant): FoodDispla
   return {
     servingSize: variant.serving_size,
     servingUnit: variant.serving_unit,
-    servingDescription: variant.serving_description,
+    servingDescription: variant.serving_description ?? undefined,
     calories: variant.calories,
     protein: variant.protein,
     carbs: variant.carbs,
@@ -174,6 +174,7 @@ export function foodInfoToUnitVariant(item: FoodInfoItem): FoodUnitVariant {
     id: item.variantId,
     serving_size: item.servingSize,
     serving_unit: item.servingUnit,
+    serving_description: item.servingDescription,
     calories: item.calories,
     protein: item.protein,
     carbs: item.carbs,
@@ -200,6 +201,9 @@ export function localVariantToUnitVariant(variant: FoodVariantDetail): FoodUnitV
     is_default: variant.is_default,
     serving_size: variant.serving_size,
     serving_unit: variant.serving_unit,
+    serving_description: variant.serving_description,
+    serving_weight: variant.serving_weight,
+    serving_weight_unit: variant.serving_weight_unit,
     calories: variant.calories,
     protein: variant.protein,
     carbs: variant.carbs,
@@ -237,6 +241,8 @@ export function externalVariantToUnitVariant(
     serving_size: variant.serving_size,
     serving_unit: variant.serving_unit,
     serving_description: variant.serving_description,
+    serving_weight: variant.serving_weight,
+    serving_weight_unit: variant.serving_weight_unit,
     calories: variant.calories,
     protein: variant.protein,
     carbs: variant.carbs,
@@ -285,8 +291,13 @@ export function formatServingUnit(unit: string | undefined | null): string {
   return /[._]/.test(unit) ? formatServingDescription(unit) : unit;
 }
 
-export function formatVariantLabel(values: Pick<FoodDisplayValues, 'servingSize' | 'servingUnit' | 'calories'>): string {
-  return `${formatServingSizeDisplay(values.servingSize)} ${formatServingUnit(values.servingUnit)} (${formatCaloriesDisplay(values.calories)} cal)`;
+export function formatVariantLabel(
+  values: Pick<FoodDisplayValues, 'servingSize' | 'servingUnit' | 'calories' | 'servingDescription'>,
+): string {
+  const servingLabel = hasMeaningfulDescription(values.servingDescription)
+    ? formatServingDescription(values.servingDescription ?? '')
+    : `${formatServingSizeDisplay(values.servingSize)} ${formatServingUnit(values.servingUnit)}`;
+  return `${servingLabel} (${formatCaloriesDisplay(values.calories)} cal)`;
 }
 
 export function buildLocalVariantOptions(
@@ -297,8 +308,10 @@ export function buildLocalVariantOptions(
     label: formatVariantLabel({
       servingSize: variant.serving_size,
       servingUnit: variant.serving_unit,
+      servingDescription: variant.serving_description ?? undefined,
       calories: variant.calories,
     }),
+    servingDescription: variant.serving_description ?? undefined,
     servingSize: variant.serving_size,
     servingUnit: variant.serving_unit,
     calories: variant.calories,
@@ -327,9 +340,11 @@ export function buildExternalVariantOptions(
     return {
       id: `ext-${index}`,
       label: `${formatted} (${variant.calories} cal)`,
-      servingDescription: variant.serving_description,
+      servingDescription: variant.serving_description ?? undefined,
       servingSize: variant.serving_size,
       servingUnit: variant.serving_unit,
+      serving_weight: variant.serving_weight,
+      serving_weight_unit: variant.serving_weight_unit,
       calories: variant.calories,
       protein: variant.protein,
       carbs: variant.carbs,
@@ -369,6 +384,9 @@ export function buildCreateFoodVariantInput(
   return {
     serving_size: variant.serving_size,
     serving_unit: variant.serving_unit,
+    serving_description: variant.serving_description,
+    serving_weight: variant.serving_weight,
+    serving_weight_unit: variant.serving_weight_unit,
     calories: variant.calories,
     protein: variant.protein,
     carbs: variant.carbs,

@@ -2,6 +2,8 @@ export interface ExternalFoodVariant {
   serving_size: number;
   serving_unit: string;
   serving_description: string;
+  serving_weight?: number;
+  serving_weight_unit?: string;
   calories: number;
   protein: number;
   carbs: number;
@@ -35,6 +37,10 @@ export interface ExternalFoodItem {
   id: string;
   name: string;
   brand: string | null;
+  barcode?: string | null;
+  provider_type?: string;
+  provider_external_id?: string;
+  is_custom?: boolean;
   calories: number;
   protein: number;
   carbs: number;
@@ -53,6 +59,8 @@ export interface ExternalFoodItem {
   serving_size: number;
   serving_unit: string;
   serving_description?: string;
+  serving_weight?: number;
+  serving_weight_unit?: string;
   source: string;
   variants?: ExternalFoodVariant[];
   /** Whether the food is verified by the provider (e.g. Yazio verified foods) */

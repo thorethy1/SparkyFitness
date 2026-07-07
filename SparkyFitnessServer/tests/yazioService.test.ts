@@ -283,6 +283,7 @@ describe('yazioService', () => {
       producer: 'Molkerei',
       serving_quantity: 100,
       base_unit: 'g',
+      is_verified: true,
       nutrients: {
         'energy.energy': 0.64,
         'nutrient.protein': 0.11,
@@ -299,6 +300,10 @@ describe('yazioService', () => {
       .mockResolvedValueOnce(
         makeFetchResponse({
           ...product,
+          // YAZIO search can mark a candidate verified even when the detail
+          // endpoint omits that field; search results must preserve it for the
+          // Add Food/Search screen.
+          is_verified: undefined,
           nutrients: { ...product.nutrients, 'nutrient.dietaryfiber': 0.004 },
         })
       );
@@ -329,6 +334,7 @@ describe('yazioService', () => {
       })
     );
     expect(result.foods).toHaveLength(1);
+    expect(result.foods[0]?.provider_verified).toBe(true);
     expect(result.pagination).toEqual({
       page: 1,
       pageSize: 1,
@@ -461,6 +467,7 @@ describe('yazioService', () => {
             producer: 'Brand',
             serving_quantity: 100,
             base_unit: 'g',
+            is_verified: true,
           },
         ])
       )
@@ -499,6 +506,7 @@ describe('yazioService', () => {
     expect(result?.provider_external_id).toBe(
       '7c91b431-a2b5-4f11-8f52-f346dc941f2a'
     );
+    expect(result?.provider_verified).toBe(true);
     expect(result?.barcode).toBe('0094395000172');
   });
 

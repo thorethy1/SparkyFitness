@@ -409,6 +409,8 @@ interface NormalizedFoodVariant {
   serving_size: number;
   serving_unit: string;
   serving_description?: string;
+  serving_weight?: number;
+  serving_weight_unit?: string;
   calories: number;
   protein: number;
   carbs: number;
@@ -469,6 +471,8 @@ export function transformNormalizedFood(food: NormalizedFood, providerType: stri
     serving_size: v.serving_size,
     serving_unit: v.serving_unit,
     serving_description: v.serving_description ?? `${v.serving_size} ${v.serving_unit}`,
+    serving_weight: v.serving_weight,
+    serving_weight_unit: v.serving_weight_unit,
     calories: v.calories,
     protein: v.protein,
     carbs: v.carbs,
@@ -498,6 +502,10 @@ export function transformNormalizedFood(food: NormalizedFood, providerType: stri
     id: food.provider_external_id ?? food.id ?? '',
     name: food.name,
     brand: food.brand,
+    barcode: food.barcode,
+    provider_type: food.provider_type ?? providerType,
+    provider_external_id: food.provider_external_id,
+    is_custom: food.is_custom,
     ...mapVariant(displayVariant),
     serving_description: displayVariant.serving_description ?? `${displayVariant.serving_size} ${displayVariant.serving_unit}`,
     source: food.provider_type ?? providerType,

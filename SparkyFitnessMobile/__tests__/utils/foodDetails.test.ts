@@ -179,6 +179,17 @@ describe('formatVariantLabel', () => {
       '100 g (52 cal)',
     );
   });
+
+  test('prefers meaningful serving descriptions with gram weight', () => {
+    expect(
+      formatVariantLabel({
+        servingSize: 1,
+        servingUnit: 'piece',
+        servingDescription: '1 piece (15 g)',
+        calories: 50,
+      }),
+    ).toBe('1 piece (15 g) (50 cal)');
+  });
 });
 
 describe('buildLocalVariantOptions', () => {
@@ -211,6 +222,29 @@ describe('buildLocalVariantOptions', () => {
       saturatedFat: 0.1,
       vitaminA: 8,
       vitaminC: 6,
+    });
+  });
+
+  test('uses local serving_description for saved provider portion labels', () => {
+    const options = buildLocalVariantOptions([
+      makeLocalVariant({
+        id: 'v-piece',
+        serving_size: 1,
+        serving_unit: 'piece',
+        serving_description: '1 piece (15 g)',
+        serving_weight: 15,
+        serving_weight_unit: 'g',
+        calories: 50,
+      }),
+    ]);
+
+    expect(options[0]).toMatchObject({
+      id: 'v-piece',
+      label: '1 piece (15 g) (50 cal)',
+      servingDescription: '1 piece (15 g)',
+      servingSize: 1,
+      servingUnit: 'piece',
+      calories: 50,
     });
   });
 });

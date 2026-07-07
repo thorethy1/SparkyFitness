@@ -266,6 +266,15 @@ describe('FoodEntryViewScreen', () => {
     expect(navigation.replace).not.toHaveBeenCalled();
   });
 
+  it('renders verified badge for verified diary entries', () => {
+    const screen = renderScreen({
+      entry: { ...baseEntry, provider_verified: true },
+    });
+
+    expect(screen.getByText('Greek Yogurt')).toBeTruthy();
+    expect(screen.getByTestId('verified-badge')).toBeTruthy();
+  });
+
   it('applies the unit returned from adjust nutrition and saves against that variant', async () => {
     const screen = renderScreen({
       adjustedValues: {

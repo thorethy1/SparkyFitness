@@ -1857,6 +1857,9 @@ CREATE TABLE public.food_variants (
     food_id uuid NOT NULL,
     serving_size numeric DEFAULT 1 NOT NULL,
     serving_unit text DEFAULT 'g'::text NOT NULL,
+    serving_description text,
+    serving_weight numeric,
+    serving_weight_unit text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     calories numeric DEFAULT 0,
@@ -1905,6 +1908,7 @@ CREATE TABLE public.foods (
     updated_at timestamp with time zone DEFAULT now(),
     shared_with_public boolean DEFAULT false,
     provider_type text,
+    provider_verified boolean DEFAULT false NOT NULL,
     is_quick_food boolean DEFAULT false NOT NULL
 );
 

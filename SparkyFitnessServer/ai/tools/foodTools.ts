@@ -59,6 +59,7 @@ const FOOD_PROVIDER_TYPES = [
   'fatsecret',
   'mealie',
   'tandoor',
+  'yazio',
   'norish',
   'usda',
   'openfoodfacts',
@@ -480,7 +481,7 @@ export function buildFoodTools(userId: string, tz: string) {
 
 Actions:
 - search_food(food_name, search_type:"exact"|"broad", limit?, offset?)
-- lookup_food_nutrition(food_name, provider_type?) — AI MUST call this cascade lookup first before creating or estimating a food. Bypasses regular cascade to search specific provider (e.g. openfoodfacts, usda) if provider_type given.
+- lookup_food_nutrition(food_name, provider_type?) — AI MUST call this cascade lookup first before creating or estimating a food. Bypasses regular cascade to search specific provider (e.g. openfoodfacts, usda, yazio) if provider_type given.
 - log_food(food_name, quantity, unit, meal_type:"breakfast"|"lunch"|"dinner"|"snacks", entry_date, food_id?, variant_id?)
 - create_food(food_name, calories, protein, carbs, fat, brand?, quantity?, unit?, saturated_fat?, fiber?, sugar?, sodium?, ...) — AI clients should search the web and populate as many micro-nutrients, GI classification, and brand ('Homemade' or 'Traditional' if generic) as possible rather than just core macros. ONLY call this if lookup_food_nutrition returns source='ai_estimate'.
 - search_meal(meal_name)

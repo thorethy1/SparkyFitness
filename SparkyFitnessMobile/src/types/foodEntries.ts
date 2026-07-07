@@ -48,4 +48,5 @@ export interface FoodEntry {
   // manually-logged entries. Used by Health Connect writeback to avoid re-exporting
   // entries that were themselves imported from a provider.
   source?: string | null;
+  provider_verified?: boolean;
 }

@@ -2,6 +2,9 @@ export interface FoodDefaultVariant {
   id?: string;
   serving_size: number;
   serving_unit: string;
+  serving_description?: string | null;
+  serving_weight?: number | null;
+  serving_weight_unit?: string | null;
   calories: number;
   protein: number;
   carbs: number;
@@ -32,6 +35,9 @@ export interface FoodItem {
   is_custom: boolean;
   user_id?: string;
   shared_with_public?: boolean;
+  provider_type?: string | null;
+  provider_external_id?: string | null;
+  provider_verified?: boolean;
   is_quick_food?: boolean;
   default_variant: FoodDefaultVariant;
 }
@@ -67,6 +73,9 @@ export interface FoodVariantDetail {
   food_id: string;
   serving_size: number;
   serving_unit: string;
+  serving_description?: string | null;
+  serving_weight?: number | null;
+  serving_weight_unit?: string | null;
   calories: number;
   protein: number;
   carbs: number;
