@@ -113,7 +113,7 @@ const FoodResultCard = ({
                 </Badge>
               )}
               {isFood && foodItem.provider_verified && (
-                <ProviderVerifiedBadge className="text-xs" />
+                <ProviderVerifiedBadge />
               )}
               {isFood &&
                 foodItem.default_variant?.source === 'ai_estimate' &&

@@ -168,9 +168,7 @@ const CustomFoodForm = ({
             <CardTitle>
               {food && food.id ? 'Edit Food' : 'Add Custom Food'}
             </CardTitle>
-            {food?.provider_verified ? (
-              <ProviderVerifiedBadge className="text-xs" />
-            ) : null}
+            {food?.provider_verified ? <ProviderVerifiedBadge /> : null}
           </div>
         </CardHeader>
         <CardContent>
