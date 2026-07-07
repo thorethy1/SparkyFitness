@@ -13,10 +13,6 @@ import type { FoodEntry } from '../types/foodEntries';
 import type { ExternalFoodVariant } from '../types/externalFoods';
 import { persistExternalVariants } from '../utils/persistExternalVariants';
 
-function variantKey(v: { serving_size?: number; serving_unit?: string }) {
-  return `${v.serving_size}:${v.serving_unit}`;
-}
-
 export interface AddFoodEntryInput {
   saveFoodPayload?: SaveFoodPayload;
   saveThenCreateVariantPayload?: Omit<CreateFoodVariantPayload, 'food_id'>;
@@ -45,8 +41,9 @@ async function resolveSelectedVariantId(
 ): Promise<string | undefined> {
   try {
     const allVariants = await fetchFoodVariants(foodId);
-    const selectedKey = `${selectedServingSize}:${selectedServingUnit}`;
-    const match = allVariants.find((v) => `${v.serving_size}:${v.serving_unit}` === selectedKey);
+    const match = allVariants.find(
+      (v) => v.serving_size === selectedServingSize && v.serving_unit === selectedServingUnit
+    );
     return match?.id;
   } catch {
     return undefined;
@@ -94,8 +91,7 @@ export function useAddFoodEntry(options?: UseAddFoodEntryOptions) {
           // update the entry unit to match the selected variant's unit.
           if (input.externalVariants) {
             const selected = input.externalVariants.find(
-              (v) =>
-                variantKey(v) === variantKey({ serving_size: selectedServingSize, serving_unit: selectedServingUnit }),
+              (v) => v.serving_size === selectedServingSize && v.serving_unit === selectedServingUnit,
             );
             if (selected) {
               unit = selected.serving_unit;

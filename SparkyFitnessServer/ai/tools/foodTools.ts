@@ -125,8 +125,12 @@ function resolveQuantityForVariantUnit(args: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   variant: any;
 }): { quantity: number; unit: string } | null {
+  if (!args.variant) {
+    return null;
+  }
+
   const requestedUnit = normalizeFoodUnit(args.requestedUnit);
-  const variantUnit = normalizeFoodUnit(args.variant?.serving_unit);
+  const variantUnit = normalizeFoodUnit(args.variant.serving_unit);
   if (requestedUnit && requestedUnit === variantUnit) {
     return {
       quantity: args.requestedQuantity,
