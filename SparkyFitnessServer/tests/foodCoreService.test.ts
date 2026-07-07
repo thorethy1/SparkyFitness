@@ -57,7 +57,30 @@ describe('foodCoreService.createFood', () => {
       TEST_USER_ID
     );
     expect(foodRepository.createFood).not.toHaveBeenCalled();
+    expect(foodRepository.updateFood).not.toHaveBeenCalled();
     expect(result).toEqual(existingFood);
+  });
+  it('should refresh provider verification when an existing external food is saved again', async () => {
+    const existingFood = makeExistingFood({ provider_verified: false });
+    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
+    foodRepository.findFoodByBarcode.mockResolvedValue(null);
+    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
+    foodRepository.findFoodByProviderExternalId.mockResolvedValueOnce(
+      existingFood
+    );
+
+    const result = await foodCoreService.createFood(
+      TEST_USER_ID,
+      makeFoodData({ barcode: undefined, provider_verified: true })
+    );
+
+    expect(foodRepository.createFood).not.toHaveBeenCalled();
+    expect(foodRepository.updateFood).toHaveBeenCalledWith(
+      existingFood.id,
+      TEST_USER_ID,
+      { provider_verified: true }
+    );
+    expect(result).toEqual({ ...existingFood, provider_verified: true });
   });
   it('should create a new food when barcode does not exist for user', async () => {
     const newFood = makeExistingFood({ id: 'food-new-789' });

@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useCSSVariable } from 'uniwind';
 
@@ -8,6 +8,7 @@ type VerifiedBadgeSize = 'sm' | 'md';
 interface VerifiedBadgeProps {
   size?: VerifiedBadgeSize;
   testID?: string;
+  style?: StyleProp<ViewStyle>;
 }
 
 const FALLBACK_CALORIES_COLOR = '#8792E3';
@@ -27,6 +28,7 @@ const checkPath = 'M7.15 12.25l2.95 3.05 6.75-6.95';
 const VerifiedBadge: React.FC<VerifiedBadgeProps> = ({
   size = 'sm',
   testID = 'verified-badge',
+  style,
 }) => {
   const caloriesColor = String(useCSSVariable('--color-calories') || FALLBACK_CALORIES_COLOR);
   const dimensions = SIZE_MAP[size];
@@ -43,6 +45,7 @@ const VerifiedBadge: React.FC<VerifiedBadgeProps> = ({
           height: dimensions.badge,
           shadowColor: caloriesColor,
         },
+        style,
       ]}
     >
       <Svg width={dimensions.badge} height={dimensions.badge} viewBox="0 0 24 24">

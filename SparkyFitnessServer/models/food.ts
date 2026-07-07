@@ -7,6 +7,9 @@ const DEFAULT_VARIANT_JSON_SQL = `
     'id', fv.id,
     'serving_size', fv.serving_size,
     'serving_unit', fv.serving_unit,
+    'serving_description', fv.serving_description,
+    'serving_weight', fv.serving_weight,
+    'serving_weight_unit', fv.serving_weight_unit,
     'calories', fv.calories,
     'protein', fv.protein,
     'carbs', fv.carbs,
@@ -126,7 +129,7 @@ async function searchFoods(
   try {
     let query = `
       SELECT
-        f.id, f.name, f.brand, f.is_custom, f.user_id, f.shared_with_public, f.provider_external_id, f.provider_type,
+        f.id, f.name, f.brand, f.is_custom, f.user_id, f.shared_with_public, f.provider_external_id, f.provider_type, f.provider_verified,
         ${DEFAULT_VARIANT_JSON_SQL}
       FROM foods f
       ${PREFERRED_DEFAULT_VARIANT_JOIN_SQL}
@@ -161,8 +164,8 @@ async function createFood(foodData: any) {
     // 1. Create the food entry
     const foodResult = await client.query(
       `INSERT INTO foods (
-        name, is_custom, user_id, brand, barcode, provider_external_id, shared_with_public, provider_type, is_quick_food, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, now(), now()) RETURNING id, name, brand, is_custom, user_id, shared_with_public, is_quick_food, provider_external_id, provider_type`,
+        name, is_custom, user_id, brand, barcode, provider_external_id, shared_with_public, provider_type, provider_verified, is_quick_food, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, now(), now()) RETURNING id, name, brand, is_custom, user_id, shared_with_public, is_quick_food, provider_external_id, provider_type, provider_verified`,
       [
         foodData.name,
         sanitizeBoolean(foodData.is_custom) ?? true,
@@ -174,6 +177,7 @@ async function createFood(foodData: any) {
         foodData.provider_external_id,
         sanitizeBoolean(foodData.shared_with_public) ?? false,
         foodData.provider_type,
+        sanitizeBoolean(foodData.provider_verified) ?? false,
         sanitizeBoolean(foodData.is_quick_food) ?? false,
       ]
     );
@@ -181,16 +185,19 @@ async function createFood(foodData: any) {
     // 2. Create the primary food variant and mark it as default
     const variantResult = await client.query(
       `INSERT INTO food_variants (
-        food_id, serving_size, serving_unit, calories, protein, carbs, fat,
+        food_id, serving_size, serving_unit, serving_description, serving_weight, serving_weight_unit, calories, protein, carbs, fat,
         saturated_fat, polyunsaturated_fat, monounsaturated_fat, trans_fat,
         cholesterol, sodium, potassium, dietary_fiber, sugars,
         vitamin_a, vitamin_c, calcium, iron, is_default, glycemic_index, custom_nutrients,
         source, ai_confidence, allergens, traces, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, TRUE, $21, $22, $23, $24, $25, $26, now(), now()) RETURNING id`,
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, TRUE, $24, $25, $26, $27, $28, $29, now(), now()) RETURNING id`,
       [
         newFood.id,
         sanitizeNumeric(foodData.serving_size),
         foodData.serving_unit,
+        foodData.serving_description ?? null,
+        sanitizeNumeric(foodData.serving_weight),
+        foodData.serving_weight_unit ?? null,
         sanitizeNumeric(foodData.calories),
         sanitizeNumeric(foodData.protein),
         sanitizeNumeric(foodData.carbs),
@@ -225,6 +232,9 @@ async function createFood(foodData: any) {
         id: newVariantId,
         serving_size: foodData.serving_size,
         serving_unit: foodData.serving_unit,
+        serving_description: foodData.serving_description ?? null,
+        serving_weight: foodData.serving_weight ?? null,
+        serving_weight_unit: foodData.serving_weight_unit ?? null,
         calories: foodData.calories,
         protein: foodData.protein,
         carbs: foodData.carbs,
@@ -265,7 +275,7 @@ async function findFoodByBarcode(barcode: any, userId: any) {
   try {
     const result = await client.query(
       `SELECT
-        f.id, f.name, f.brand, f.barcode, f.is_custom, f.user_id, f.shared_with_public, f.provider_external_id, f.provider_type,
+        f.id, f.name, f.brand, f.barcode, f.is_custom, f.user_id, f.shared_with_public, f.provider_external_id, f.provider_type, f.provider_verified,
         ${DEFAULT_VARIANT_JSON_SQL}
       FROM foods f
       ${PREFERRED_DEFAULT_VARIANT_JOIN_SQL}
@@ -284,7 +294,7 @@ async function getFoodById(foodId: any, userId: any) {
   try {
     const result = await client.query(
       `SELECT
-        f.id, f.name, f.brand, f.barcode, f.is_custom, f.user_id, f.shared_with_public, f.provider_external_id, f.provider_type,
+        f.id, f.name, f.brand, f.barcode, f.is_custom, f.user_id, f.shared_with_public, f.provider_external_id, f.provider_type, f.provider_verified,
         ${DEFAULT_VARIANT_JSON_SQL}
       FROM foods f
       ${PREFERRED_DEFAULT_VARIANT_JOIN_SQL}
@@ -335,9 +345,10 @@ async function updateFood(id: any, userId: any, foodData: any) {
         provider_external_id = COALESCE($6, provider_external_id),
         shared_with_public = COALESCE($7, shared_with_public),
         provider_type = COALESCE($8, provider_type),
-        is_quick_food = COALESCE($9, is_quick_food),
+        provider_verified = COALESCE($9, provider_verified),
+        is_quick_food = COALESCE($10, is_quick_food),
         updated_at = now()
-      WHERE id = $10
+      WHERE id = $11
       RETURNING *`,
       [
         foodData.name,
@@ -348,6 +359,7 @@ async function updateFood(id: any, userId: any, foodData: any) {
         foodData.provider_external_id,
         foodData.shared_with_public,
         foodData.provider_type,
+        foodData.provider_verified,
         foodData.is_quick_food,
         id,
       ]
@@ -397,7 +409,7 @@ async function getFoodsWithPagination(
     // RLS will handle ownership filtering
     let query = `
       SELECT
-        f.id, f.name, f.brand, f.barcode, f.is_custom, f.user_id, f.shared_with_public, f.provider_external_id, f.provider_type,
+        f.id, f.name, f.brand, f.barcode, f.is_custom, f.user_id, f.shared_with_public, f.provider_external_id, f.provider_type, f.provider_verified,
         ${DEFAULT_VARIANT_JSON_SQL}
       FROM foods f
       ${PREFERRED_DEFAULT_VARIANT_JOIN_SQL}
@@ -773,8 +785,8 @@ async function createFoodsInBulk(userId: any, foodDataArray: any) {
     let totalVariantsCreated = 0;
     for (const food of foodsToCreate) {
       const foodResult = await client.query(
-        `INSERT INTO foods (name, brand, is_custom, user_id, shared_with_public, is_quick_food,barcode,provider_external_id,provider_type, created_at, updated_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, now(), now())
+        `INSERT INTO foods (name, brand, is_custom, user_id, shared_with_public, is_quick_food,barcode,provider_external_id,provider_type,provider_verified, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, now(), now())
            RETURNING id`,
         [
           // @ts-expect-error TS(2571): Object is of type 'unknown'.
@@ -795,6 +807,8 @@ async function createFoodsInBulk(userId: any, foodDataArray: any) {
           food.provider_external_id || null,
           // @ts-expect-error TS(2571): Object is of type 'unknown'.
           food.provider_type || null,
+          // @ts-expect-error TS(2571): Object is of type 'unknown'.
+          sanitizeBoolean(food.provider_verified) ?? false,
         ]
       );
       const newFoodId = foodResult.rows[0].id;
@@ -803,19 +817,22 @@ async function createFoodsInBulk(userId: any, foodDataArray: any) {
       for (const variant of food.variants) {
         await client.query(
           `INSERT INTO food_variants (
-              food_id, serving_size, serving_unit, is_default, calories, protein, carbs, fat,
+              food_id, serving_size, serving_unit, serving_description, serving_weight, serving_weight_unit, is_default, calories, protein, carbs, fat,
               saturated_fat, polyunsaturated_fat, monounsaturated_fat, trans_fat,
               cholesterol, sodium, potassium, dietary_fiber, sugars,
               vitamin_a, vitamin_c, calcium, iron, glycemic_index, custom_nutrients,
               source, ai_confidence, allergens, traces, created_at, updated_at
             ) VALUES (
               $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
-              $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, now(), now()
+              $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, now(), now()
             )`,
           [
             newFoodId,
             sanitizeNumeric(variant.serving_size),
             variant.serving_unit,
+            variant.serving_description ?? null,
+            sanitizeNumeric(variant.serving_weight),
+            variant.serving_weight_unit ?? null,
             sanitizeBoolean(variant.is_default) ?? true,
             sanitizeNumeric(variant.calories),
             sanitizeNumeric(variant.protein),
@@ -914,7 +931,7 @@ async function findFoodByProviderExternalId(
   const client = await getClient(userId);
   try {
     const result = await client.query(
-      `SELECT f.id, f.name, f.brand, f.barcode, f.is_custom, f.user_id, f.shared_with_public, f.provider_external_id, f.provider_type,
+      `SELECT f.id, f.name, f.brand, f.barcode, f.is_custom, f.user_id, f.shared_with_public, f.provider_external_id, f.provider_type, f.provider_verified,
               ${DEFAULT_VARIANT_JSON_SQL}
        FROM foods f
        ${PREFERRED_DEFAULT_VARIANT_JOIN_SQL}

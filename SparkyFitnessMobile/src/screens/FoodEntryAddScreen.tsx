@@ -659,15 +659,25 @@ const FoodEntryAddScreen: React.FC<FoodEntryAddScreenProps> = ({
   ]) as [string, string, string];
 
   const buildSaveFoodPayload = useCallback(
-    () => ({
+    () => {
+      const sourceVariant = activeItem.externalVariants?.find(
+        (variant) => variant.serving_size === saveFoodSourceValues.servingSize
+          && variant.serving_unit === saveFoodSourceValues.servingUnit,
+      );
+
+      return {
       name: adjustedValues?.name || activeItem.name,
       brand: adjustedValues?.brand ?? activeItem.brand ?? null,
       barcode: activeItem.barcode ?? null,
       provider_type: activeItem.provider_type ?? null,
       provider_external_id: activeItem.provider_external_id ?? null,
+      provider_verified: activeItem.provider_verified === true,
       is_custom: activeItem.is_custom ?? true,
       serving_size: saveFoodSourceValues.servingSize,
       serving_unit: saveFoodSourceValues.servingUnit,
+      serving_description: sourceVariant?.serving_description ?? activeItem.servingDescription ?? `${saveFoodSourceValues.servingSize} ${saveFoodSourceValues.servingUnit}`,
+      serving_weight: sourceVariant?.serving_weight ?? null,
+      serving_weight_unit: sourceVariant?.serving_weight_unit ?? null,
       calories: saveFoodSourceValues.calories,
       protein: saveFoodSourceValues.protein,
       carbs: saveFoodSourceValues.carbs,
@@ -683,8 +693,9 @@ const FoodEntryAddScreen: React.FC<FoodEntryAddScreenProps> = ({
       cholesterol: saveFoodSourceValues.cholesterol,
       vitamin_a: saveFoodSourceValues.vitaminA,
       vitamin_c: saveFoodSourceValues.vitaminC,
-    }),
-    [activeItem.barcode, activeItem.brand, activeItem.is_custom, activeItem.name, activeItem.provider_external_id, activeItem.provider_type, adjustedValues, saveFoodSourceValues],
+      };
+    },
+    [activeItem.barcode, activeItem.brand, activeItem.externalVariants, activeItem.is_custom, activeItem.name, activeItem.provider_external_id, activeItem.provider_type, activeItem.provider_verified, activeItem.servingDescription, adjustedValues, saveFoodSourceValues],
   );
 
   const {
