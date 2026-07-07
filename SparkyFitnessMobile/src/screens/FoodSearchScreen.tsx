@@ -722,9 +722,11 @@ const FoodSearchScreen: React.FC<FoodSearchScreenProps> = ({ navigation, route }
     >
       <View className="flex-row justify-between items-center">
         <View className="flex-1 mr-3">
-          <View className="flex-row items-center gap-1">
-            <Text className="text-text-primary text-base font-medium">{item.name}</Text>
-            {item.provider_verified ? <VerifiedBadge size="sm" /> : null}
+          <View className="flex-row items-start gap-1">
+            <Text className="text-text-primary text-base font-medium flex-shrink">
+              {item.name}
+            </Text>
+            {item.provider_verified ? <VerifiedBadge size="sm" style={{ marginTop: 2 }} /> : null}
           </View>
           {badge || item.brand ? (
             <View className="flex-row items-center gap-1.5 mt-0.5">

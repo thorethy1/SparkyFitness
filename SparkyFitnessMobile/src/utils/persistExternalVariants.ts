@@ -31,11 +31,13 @@ export async function persistExternalVariants(
   if (!externalVariants || externalVariants.length === 0) return;
 
   let existingKeys = new Set<string>();
+  let fetchedExistingVariants = false;
   try {
     const existing = await fetchFoodVariants(savedFood.id);
     existingKeys = new Set(existing.map((variant) => variantKey(variant)));
+    fetchedExistingVariants = true;
   } catch {
-    // If we can't check existing variants, still try to persist provider variants.
+    // If we can't check existing variants, fall back to the saved default only.
     // A possible duplicate is less harmful than missing all alternate servings.
   }
 
@@ -44,13 +46,17 @@ export async function persistExternalVariants(
   await Promise.all(
     externalVariants.map(async (variant) => {
       const key = variantKey(variant);
-      if (key === defaultKey || existingKeys.has(key)) return;
+      if (existingKeys.has(key)) return;
+      if (!fetchedExistingVariants && key === defaultKey) return;
 
       try {
         await createFoodVariant({
           food_id: savedFood.id,
           serving_size: variant.serving_size,
           serving_unit: variant.serving_unit,
+          serving_description: variant.serving_description,
+          serving_weight: variant.serving_weight,
+          serving_weight_unit: variant.serving_weight_unit,
           calories: variant.calories,
           protein: variant.protein,
           carbs: variant.carbs,

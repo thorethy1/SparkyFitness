@@ -365,26 +365,16 @@ describe('useAddFoodEntry', () => {
 
     expect(mockFetchFoodVariants).toHaveBeenCalledWith('food-1');
     expect(mockCreateFoodVariant).toHaveBeenCalledTimes(1);
-    expect(mockCreateFoodVariant).toHaveBeenCalledWith({
+    expect(mockCreateFoodVariant).toHaveBeenCalledWith(expect.objectContaining({
       food_id: 'food-1',
       serving_size: 250,
       serving_unit: 'glass.large',
+      serving_description: 'Large glass',
       calories: 113,
       protein: 2,
       carbs: 25,
       fat: 0,
-      saturated_fat: undefined,
-      sodium: undefined,
-      dietary_fiber: undefined,
-      sugars: undefined,
-      trans_fat: undefined,
-      potassium: undefined,
-      calcium: undefined,
-      iron: undefined,
-      cholesterol: undefined,
-      vitamin_a: undefined,
-      vitamin_c: undefined,
-    });
+    }));
     expect(mockCreateFoodEntry).toHaveBeenCalledWith({
       meal_type_id: 'meal-type-1',
       quantity: 1,

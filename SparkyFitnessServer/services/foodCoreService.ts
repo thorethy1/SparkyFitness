@@ -84,6 +84,28 @@ async function searchFoods(
   }
 }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function refreshExistingExternalFoodMetadata(
+  authenticatedUserId: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  existingFood: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  foodData: any
+) {
+  if (
+    foodData.provider_verified !== true ||
+    existingFood.provider_verified === true
+  ) {
+    return existingFood;
+  }
+
+  await foodRepository.updateFood(existingFood.id, authenticatedUserId, {
+    provider_verified: true,
+  });
+
+  return { ...existingFood, provider_verified: true };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function createFood(authenticatedUserId: any, foodData: any) {
   try {
     if (foodData.barcode) {
@@ -92,7 +114,11 @@ async function createFood(authenticatedUserId: any, foodData: any) {
         authenticatedUserId
       );
       if (existingFood) {
-        return existingFood;
+        return refreshExistingExternalFoodMetadata(
+          authenticatedUserId,
+          existingFood,
+          foodData
+        );
       }
     }
     // Dedup by provider (e.g. Yazio product ID) — catches duplicate saves of
@@ -104,7 +130,11 @@ async function createFood(authenticatedUserId: any, foodData: any) {
         foodData.provider_type
       );
       if (existingFood) {
-        return existingFood;
+        return refreshExistingExternalFoodMetadata(
+          authenticatedUserId,
+          existingFood,
+          foodData
+        );
       }
     }
     const newFood = await foodRepository.createFood({

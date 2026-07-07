@@ -108,9 +108,9 @@ const FoodNutritionSummary: React.FC<FoodNutritionSummaryProps> = ({
   return (
     <Animated.View className="gap-4" layout={layoutTransition}>
       <View>
-        <View className="flex-row items-center gap-1">
-          <Text className="text-text-primary text-3xl font-bold">{name}</Text>
-          {provider_verified ? <VerifiedBadge size="md" /> : null}
+        <View className="flex-row items-start gap-1.5">
+          <Text className="text-text-primary text-3xl font-bold flex-shrink">{name}</Text>
+          {provider_verified ? <VerifiedBadge size="md" style={{ marginTop: 5 }} /> : null}
         </View>
         {brand ? (
           <Text className="text-text-secondary text-base mt-1">{brand}</Text>
