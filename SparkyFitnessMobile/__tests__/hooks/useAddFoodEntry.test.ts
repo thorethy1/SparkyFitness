@@ -1,7 +1,7 @@
 import { renderHook, waitFor, act } from '@testing-library/react-native';
 import { useAddFoodEntry } from '../../src/hooks/useAddFoodEntry';
 import { createFoodEntry } from '../../src/services/api/foodEntriesApi';
-import { createFoodVariant, saveFood } from '../../src/services/api/foodsApi';
+import { createFoodVariant, fetchFoodVariants, saveFood } from '../../src/services/api/foodsApi';
 import { createTestQueryClient, createQueryWrapper, type QueryClient } from './queryTestUtils';
 
 jest.mock('../../src/services/api/foodEntriesApi', () => ({
@@ -10,6 +10,7 @@ jest.mock('../../src/services/api/foodEntriesApi', () => ({
 
 jest.mock('../../src/services/api/foodsApi', () => ({
   createFoodVariant: jest.fn(),
+  fetchFoodVariants: jest.fn(),
   saveFood: jest.fn(),
 }));
 
@@ -20,6 +21,8 @@ jest.mock('../../src/services/LogService', () => ({
 const mockCreateFoodEntry = createFoodEntry as jest.MockedFunction<typeof createFoodEntry>;
 const mockCreateFoodVariant =
   createFoodVariant as jest.MockedFunction<typeof createFoodVariant>;
+const mockFetchFoodVariants =
+  fetchFoodVariants as jest.MockedFunction<typeof fetchFoodVariants>;
 const mockSaveFood = saveFood as jest.MockedFunction<typeof saveFood>;
 
 describe('useAddFoodEntry', () => {
@@ -30,6 +33,8 @@ describe('useAddFoodEntry', () => {
     queryClient = createTestQueryClient();
     mockSaveFood.mockReset();
     mockCreateFoodVariant.mockReset();
+    mockFetchFoodVariants.mockReset();
+    mockFetchFoodVariants.mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -234,6 +239,159 @@ describe('useAddFoodEntry', () => {
       entry_date: '2026-04-25',
       food_id: 'food-1',
       variant_id: 'variant-oz',
+    });
+  });
+
+  test('persists additional external provider variants before logging a saved external food', async () => {
+    mockSaveFood.mockResolvedValue({
+      id: 'food-1',
+      name: 'Orange Juice',
+      brand: 'Yazio',
+      is_custom: false,
+      default_variant: {
+        id: 'default-variant',
+        serving_size: 100,
+        serving_unit: 'ml',
+        calories: 45,
+        protein: 1,
+        carbs: 10,
+        fat: 0,
+      },
+    } as any);
+    mockFetchFoodVariants.mockResolvedValue([
+      {
+        id: 'default-variant',
+        food_id: 'food-1',
+        serving_size: 100,
+        serving_unit: 'ml',
+        calories: 45,
+        protein: 1,
+        carbs: 10,
+        fat: 0,
+      },
+      {
+        id: 'small-glass',
+        food_id: 'food-1',
+        serving_size: 200,
+        serving_unit: 'glass.small',
+        calories: 90,
+        protein: 2,
+        carbs: 20,
+        fat: 0,
+      },
+    ] as any);
+    mockCreateFoodVariant.mockResolvedValue({
+      id: 'large-glass',
+      food_id: 'food-1',
+      serving_size: 250,
+      serving_unit: 'glass.large',
+      calories: 113,
+      protein: 2,
+      carbs: 25,
+      fat: 0,
+    } as any);
+    mockCreateFoodEntry.mockResolvedValue({
+      id: 'entry-1',
+      food_id: 'food-1',
+      variant_id: 'default-variant',
+      meal_type: 'breakfast',
+      meal_type_id: 'meal-type-1',
+      quantity: 1,
+      unit: 'ml',
+      entry_date: '2026-04-25',
+      food_name: 'Orange Juice',
+      brand_name: 'Yazio',
+      serving_size: 100,
+      serving_unit: 'ml',
+      calories: 45,
+      protein: 1,
+      carbs: 10,
+      fat: 0,
+    });
+
+    const { result } = renderHook(() => useAddFoodEntry(), {
+      wrapper: createQueryWrapper(queryClient),
+    });
+
+    await act(async () => {
+      await result.current.addEntryAsync({
+        saveFoodPayload: {
+          name: 'Orange Juice',
+          brand: 'Yazio',
+          serving_size: 100,
+          serving_unit: 'ml',
+          calories: 45,
+          protein: 1,
+          carbs: 10,
+          fat: 0,
+        },
+        externalVariants: [
+          {
+            serving_size: 100,
+            serving_unit: 'ml',
+            serving_description: '100 ml',
+            calories: 45,
+            protein: 1,
+            carbs: 10,
+            fat: 0,
+          },
+          {
+            serving_size: 200,
+            serving_unit: 'glass.small',
+            serving_description: 'Small glass',
+            calories: 90,
+            protein: 2,
+            carbs: 20,
+            fat: 0,
+          },
+          {
+            serving_size: 250,
+            serving_unit: 'glass.large',
+            serving_description: 'Large glass',
+            calories: 113,
+            protein: 2,
+            carbs: 25,
+            fat: 0,
+          },
+        ],
+        createEntryPayload: {
+          meal_type_id: 'meal-type-1',
+          quantity: 1,
+          unit: 'ml',
+          entry_date: '2026-04-25',
+        },
+      });
+    });
+
+    expect(mockFetchFoodVariants).toHaveBeenCalledWith('food-1');
+    expect(mockCreateFoodVariant).toHaveBeenCalledTimes(1);
+    expect(mockCreateFoodVariant).toHaveBeenCalledWith({
+      food_id: 'food-1',
+      serving_size: 250,
+      serving_unit: 'glass.large',
+      calories: 113,
+      protein: 2,
+      carbs: 25,
+      fat: 0,
+      saturated_fat: undefined,
+      sodium: undefined,
+      dietary_fiber: undefined,
+      sugars: undefined,
+      trans_fat: undefined,
+      potassium: undefined,
+      calcium: undefined,
+      iron: undefined,
+      cholesterol: undefined,
+      vitamin_a: undefined,
+      vitamin_c: undefined,
+    });
+    expect(mockCreateFoodEntry).toHaveBeenCalledWith({
+      meal_type_id: 'meal-type-1',
+      quantity: 1,
+      unit: 'ml',
+      entry_date: '2026-04-25',
+      food_id: 'food-1',
+      variant_id: 'default-variant',
     });
   });
 });

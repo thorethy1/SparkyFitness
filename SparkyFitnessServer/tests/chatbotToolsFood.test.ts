@@ -102,6 +102,7 @@ const FOOD_PROVIDER_TYPES = [
   'fatsecret',
   'mealie',
   'tandoor',
+  'yazio',
   'norish',
   'usda',
   'openfoodfacts',
