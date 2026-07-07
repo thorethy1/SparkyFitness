@@ -87,6 +87,24 @@ describe('FoodResultCard', () => {
     expect(screen.queryByText(/AI /i)).not.toBeInTheDocument();
   });
 
+  it('renders the provider verified badge for verified foods', () => {
+    render(
+      <FoodResultCard
+        item={createFood({
+          provider_type: 'yazio',
+          provider_external_id: 'yazio-pretzel-1',
+          provider_verified: true,
+        })}
+        nutrientConfig={nutrientConfig}
+        onCardClick={jest.fn()}
+      />
+    );
+
+    expect(screen.getByTestId('provider-verified-badge')).toHaveTextContent(
+      /Verified/i
+    );
+  });
+
   it('renders Private badge for meals owned by active user', () => {
     render(
       <FoodResultCard
