@@ -88,6 +88,147 @@ function isSet<T>(value: T | null | undefined): value is T {
   return value !== null && value !== undefined;
 }
 
+function normalizeFoodUnit(unit: unknown): string {
+  const normalized = String(unit ?? '')
+    .trim()
+    .toLowerCase();
+  const aliases: Record<string, string> = {
+    gram: 'g',
+    grams: 'g',
+    gr: 'g',
+    milliliter: 'ml',
+    milliliters: 'ml',
+    millilitre: 'ml',
+    millilitres: 'ml',
+    liter: 'l',
+    liters: 'l',
+    litre: 'l',
+    litres: 'l',
+  };
+  return aliases[normalized] ?? normalized;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function dedupeVariantsById(variants: any[]) {
+  const seen = new Set<string>();
+  return variants.filter((variant) => {
+    if (!variant?.id) return true;
+    if (seen.has(variant.id)) return false;
+    seen.add(variant.id);
+    return true;
+  });
+}
+
+function resolveQuantityForVariantUnit(args: {
+  requestedQuantity: number;
+  requestedUnit: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  variant: any;
+}): { quantity: number; unit: string } | null {
+  const requestedUnit = normalizeFoodUnit(args.requestedUnit);
+  const variantUnit = normalizeFoodUnit(args.variant?.serving_unit);
+  if (requestedUnit && requestedUnit === variantUnit) {
+    return {
+      quantity: args.requestedQuantity,
+      unit: args.variant.serving_unit,
+    };
+  }
+
+  const servingWeight = Number(args.variant?.serving_weight);
+  const servingSize = Number(args.variant?.serving_size);
+  const servingWeightUnit = normalizeFoodUnit(
+    args.variant?.serving_weight_unit
+  );
+  if (
+    requestedUnit &&
+    servingWeightUnit &&
+    requestedUnit === servingWeightUnit &&
+    Number.isFinite(servingWeight) &&
+    servingWeight > 0 &&
+    Number.isFinite(servingSize) &&
+    servingSize > 0
+  ) {
+    return {
+      quantity:
+        Math.round(
+          ((args.requestedQuantity * servingSize) / servingWeight) * 10000
+        ) / 10000,
+      unit: args.variant.serving_unit,
+    };
+  }
+
+  return null;
+}
+
+async function resolveFoodLogVariantAndQuantity(args: {
+  userId: string;
+  foodId: string;
+  variantId?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  foodRow?: any;
+  quantity: number;
+  unit: string;
+}) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let explicitVariant: any | undefined;
+  if (args.variantId) {
+    explicitVariant = await foodRepository.getFoodVariantById(
+      args.variantId,
+      args.userId
+    );
+  }
+
+  const food =
+    args.foodRow ??
+    (await foodRepository.getFoodById(args.foodId, args.userId));
+  const defaultVariant = food?.default_variant;
+  const variantsFromDb = await foodRepository.getFoodVariantsByFoodId(
+    args.foodId,
+    args.userId
+  );
+  const candidates = dedupeVariantsById(
+    [
+      explicitVariant,
+      defaultVariant,
+      ...(Array.isArray(variantsFromDb) ? variantsFromDb : []),
+    ].filter(Boolean)
+  );
+
+  const matchingVariant =
+    candidates.find(
+      (variant) =>
+        normalizeFoodUnit(variant.serving_unit) === normalizeFoodUnit(args.unit)
+    ) ??
+    candidates.find((variant) =>
+      resolveQuantityForVariantUnit({
+        requestedQuantity: args.quantity,
+        requestedUnit: args.unit,
+        variant,
+      })
+    );
+
+  const variant = explicitVariant ?? matchingVariant ?? defaultVariant;
+  const resolved = resolveQuantityForVariantUnit({
+    requestedQuantity: args.quantity,
+    requestedUnit: args.unit,
+    variant,
+  });
+
+  if (!variant?.id || !resolved) {
+    return {
+      ok: false as const,
+      message: `Cannot safely log ${args.quantity} ${args.unit} for this food because no matching serving variant or weight conversion is available.`,
+    };
+  }
+
+  return {
+    ok: true as const,
+    variantId: variant.id,
+    quantity: resolved.quantity,
+    unit: resolved.unit,
+  };
+}
+
 // MCP's date-range defaults: a single `date` overrides start/end; otherwise
 // the range defaults to today (user timezone) / the start date.
 function foodDateRange(
@@ -594,7 +735,7 @@ Actions:
 
             case 'log_food': {
               let foodId = args.food_id;
-              let variantId = args.variant_id;
+              const variantId = args.variant_id;
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               let foodRow: any;
               if (!foodId) {
@@ -606,26 +747,38 @@ Actions:
                 }
                 foodId = foodRow.id;
               }
-              if (!variantId) {
-                const food =
-                  foodRow ?? (await foodRepository.getFoodById(foodId, userId));
-                variantId = food?.default_variant?.id;
+
+              if (!foodId) {
+                return ERRORS.VALIDATION('Food ID could not be resolved.');
               }
+
+              const resolvedLog = await resolveFoodLogVariantAndQuantity({
+                userId,
+                foodId,
+                variantId,
+                foodRow,
+                quantity: args.quantity,
+                unit: args.unit,
+              });
+              if (!resolvedLog.ok) {
+                return ERRORS.VALIDATION(resolvedLog.message);
+              }
+
               const entry = await foodEntryService.createFoodEntry(
                 userId,
                 userId,
                 {
                   user_id: userId,
                   food_id: foodId,
-                  variant_id: variantId,
+                  variant_id: resolvedLog.variantId,
                   entry_date: args.entry_date,
-                  quantity: args.quantity,
-                  unit: args.unit,
+                  quantity: resolvedLog.quantity,
+                  unit: resolvedLog.unit,
                   meal_type: args.meal_type,
                 }
               );
               return formatConfirmation(
-                `Logged "${entry.food_name}" (${args.quantity} ${args.unit}) for ${args.meal_type} on ${args.entry_date}.`
+                `Logged "${entry.food_name}" (${resolvedLog.quantity} ${resolvedLog.unit}) for ${args.meal_type} on ${args.entry_date}.`
               );
             }
 
