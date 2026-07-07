@@ -10,7 +10,6 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import { useDeleteFoodEntry } from '../hooks/useDeleteFoodEntry';
-import VerifiedBadge from './VerifiedBadge';
 import { useDeleteFoodEntryMeal } from '../hooks/useDeleteFoodEntryMeal';
 import type { FoodEntry } from '../types/foodEntries';
 import type { EntryNutrition } from '../utils/mealNutrition';
@@ -143,7 +142,6 @@ const SwipeableFoodRow: React.FC<SwipeableFoodRowProps> = ({ entry, nutrition, o
               <Text className="text-md text-text-primary" numberOfLines={1}>
                 {name}
               </Text>
-              {entry.provider_verified ? <VerifiedBadge size="sm" style={{ marginLeft: 3 }} /> : null}
               <Text className="text-sm text-text-secondary" numberOfLines={1}>
                 {' · '}{entry.quantity} {entry.unit}
               </Text>
