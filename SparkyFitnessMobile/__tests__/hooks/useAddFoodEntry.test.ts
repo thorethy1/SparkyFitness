@@ -384,4 +384,132 @@ describe('useAddFoodEntry', () => {
       variant_id: 'default-variant',
     });
   });
+
+  test('resolves the correct variant_id when user selects a non-default external serving', async () => {
+    mockSaveFood.mockResolvedValue({
+      id: 'food-1',
+      name: 'Brezeln',
+      brand: 'Yazio',
+      is_custom: false,
+      default_variant: {
+        id: 'default-variant',
+        serving_size: 100,
+        serving_unit: 'g',
+        calories: 249,
+        protein: 6,
+        carbs: 46,
+        fat: 1,
+      },
+    } as any);
+    // Simulate: persistExternalVariants fetches existing, finds only '100 g',
+    // then creates the '1 Portion' variant.
+    mockFetchFoodVariants
+      .mockResolvedValueOnce([
+        {
+          id: 'default-variant',
+          food_id: 'food-1',
+          serving_size: 100,
+          serving_unit: 'g',
+          calories: 249,
+          protein: 6,
+          carbs: 46,
+          fat: 1,
+        },
+      ] as any) // first call: persistExternalVariants fetches existing
+      .mockResolvedValueOnce([
+        {
+          id: 'default-variant',
+          food_id: 'food-1',
+          serving_size: 100,
+          serving_unit: 'g',
+          calories: 249,
+          protein: 6,
+          carbs: 46,
+          fat: 1,
+        },
+        {
+          id: 'one-portion-variant',
+          food_id: 'food-1',
+          serving_size: 1,
+          serving_unit: 'Portion',
+          calories: 249,
+          protein: 6,
+          carbs: 46,
+          fat: 1,
+        },
+      ] as any); // second call: resolveSelectedVariantId after persist
+    mockCreateFoodEntry.mockResolvedValue({
+      id: 'entry-1',
+      food_id: 'food-1',
+      variant_id: 'one-portion-variant',
+      meal_type: 'breakfast',
+      meal_type_id: 'meal-type-1',
+      quantity: 1,
+      unit: 'Portion',
+      entry_date: '2026-04-25',
+      food_name: 'Brezeln',
+      brand_name: 'Yazio',
+      serving_size: 1,
+      serving_unit: 'Portion',
+      calories: 249,
+      protein: 6,
+      carbs: 46,
+      fat: 1,
+    });
+
+    const { result } = renderHook(() => useAddFoodEntry(), {
+      wrapper: createQueryWrapper(queryClient),
+    });
+
+    await act(async () => {
+      await result.current.addEntryAsync({
+        saveFoodPayload: {
+          name: 'Brezeln',
+          brand: 'Yazio',
+          serving_size: 1,
+          serving_unit: 'Portion',
+          calories: 249,
+          protein: 6,
+          carbs: 46,
+          fat: 1,
+        },
+        externalVariants: [
+          {
+            serving_size: 100,
+            serving_unit: 'g',
+            serving_description: '100 g',
+            calories: 249,
+            protein: 6,
+            carbs: 46,
+            fat: 1,
+          },
+          {
+            serving_size: 1,
+            serving_unit: 'Portion',
+            serving_description: '1 Portion',
+            calories: 249,
+            protein: 6,
+            carbs: 46,
+            fat: 1,
+          },
+        ],
+        createEntryPayload: {
+          meal_type_id: 'meal-type-1',
+          quantity: 1,
+          unit: 'Portion',
+          entry_date: '2026-04-25',
+        },
+      });
+    });
+
+    // The hook should NOT use default-variant; it should resolve to 'one-portion-variant'
+    expect(mockCreateFoodEntry).toHaveBeenCalledWith({
+      meal_type_id: 'meal-type-1',
+      quantity: 1,
+      unit: 'Portion',
+      entry_date: '2026-04-25',
+      food_id: 'food-1',
+      variant_id: 'one-portion-variant',
+    });
+  });
 });
