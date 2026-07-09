@@ -6,6 +6,9 @@ import { log } from '../../config/logging.js';
 import { normalizeNutrientUnit } from '@workspace/shared';
 import package$0 from '../../package.json' with { type: 'json' };
 import { normalizeBarcode } from '../../utils/foodUtils.js';
+const OFF_BASE_URL = (
+  process.env.OPENFOODFACTS_BASE_URL || 'https://world.openfoodfacts.org'
+).replace(/\/+$/, '');
 const { name, version } = package$0;
 const USER_AGENT = `${name}/${version} (https://github.com/CodeWithCJ/SparkyFitness)`;
 const OFF_HEADERS = {
@@ -110,7 +113,7 @@ async function searchOpenFoodFacts(
       fieldSet.add(`product_name_${language}`);
     }
     const fields = [...fieldSet];
-    const searchUrl = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=20&page=${page}&fields=${fields.join(',')}&lc=${language}`;
+    const searchUrl = `${OFF_BASE_URL}/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=20&page=${page}&fields=${fields.join(',')}&lc=${language}`;
     const response = await fetchOpenFoodFacts(searchUrl, {
       authenticatedUserId,
       providerId,
@@ -159,7 +162,7 @@ async function searchOpenFoodFactsByBarcodeFields(
     }
     const finalFields = [...fieldSet];
     const fieldsParam = finalFields.join(',');
-    const searchUrl = `https://world.openfoodfacts.org/api/v2/product/${barcode}.json?fields=${fieldsParam}&lc=${language}`;
+    const searchUrl = `${OFF_BASE_URL}/api/v2/product/${barcode}.json?fields=${fieldsParam}&lc=${language}`;
     const response = await fetchOpenFoodFacts(searchUrl, {
       authenticatedUserId,
       providerId,
