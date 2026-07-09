@@ -73,3 +73,7 @@ dossier sans titre/
 # Nix build outputs
 /result
 /result-*
+SparkyFitnessMobile/ios-signing/
+SparkyFitnessMobile/credentials.json
+SparkyFitnessMobile/targets/
+SparkyFitnessMobile/SparkyFitness
