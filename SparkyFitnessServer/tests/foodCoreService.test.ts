@@ -1,7 +1,23 @@
 import { vi, beforeEach, describe, expect, it } from 'vitest';
 import foodRepository from '../models/foodRepository.js';
 import foodCoreService from '../services/foodCoreService.js';
+import preferenceService from '../services/preferenceService.js';
+import externalProviderService from '../services/externalProviderService.js';
+import {
+  getYazioFoodDetails,
+  searchYazioByBarcode,
+} from '../integrations/yazio/yazioService.js';
 vi.mock('../models/foodRepository');
+vi.mock('../services/preferenceService.js', () => ({
+  default: { getUserPreferences: vi.fn() },
+}));
+vi.mock('../services/externalProviderService.js', () => ({
+  default: { getActiveProviderDetailsByType: vi.fn() },
+}));
+vi.mock('../integrations/yazio/yazioService.js', () => ({
+  getYazioFoodDetails: vi.fn(),
+  searchYazioByBarcode: vi.fn(),
+}));
 vi.mock('../config/logging', () => ({ log: vi.fn() }));
 const TEST_USER_ID = 'user-123';
 const makeFoodData = (overrides = {}) => ({
@@ -57,7 +73,56 @@ describe('foodCoreService.createFood', () => {
       TEST_USER_ID
     );
     expect(foodRepository.createFood).not.toHaveBeenCalled();
+    expect(foodRepository.updateFood).not.toHaveBeenCalled();
     expect(result).toEqual(existingFood);
+  });
+  it('should refresh provider verification when an existing external food is saved again', async () => {
+    const existingFood = makeExistingFood({ provider_verified: false });
+    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
+    foodRepository.findFoodByBarcode.mockResolvedValue(null);
+    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
+    foodRepository.findFoodByProviderExternalId.mockResolvedValueOnce(
+      existingFood
+    );
+
+    const result = await foodCoreService.createFood(
+      TEST_USER_ID,
+      makeFoodData({ barcode: undefined, provider_verified: true })
+    );
+
+    expect(foodRepository.createFood).not.toHaveBeenCalled();
+    expect(foodRepository.updateFood).toHaveBeenCalledWith(
+      existingFood.id,
+      TEST_USER_ID,
+      { provider_verified: true }
+    );
+    expect(result).toEqual({ ...existingFood, provider_verified: true });
+  });
+  it('should refresh provider verification when an existing food is found by barcode', async () => {
+    const existingFood = makeExistingFood({ provider_verified: false });
+    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
+    foodRepository.findFoodByBarcode.mockResolvedValue(existingFood);
+
+    const result = await foodCoreService.createFood(
+      TEST_USER_ID,
+      makeFoodData({ provider_type: 'yazio', provider_verified: true })
+    );
+
+    expect(foodRepository.findFoodByProviderExternalId).not.toHaveBeenCalled();
+    expect(foodRepository.createFood).not.toHaveBeenCalled();
+    expect(foodRepository.updateFood).toHaveBeenCalledWith(
+      existingFood.id,
+      TEST_USER_ID,
+      {
+        provider_verified: true,
+        provider_type: 'yazio',
+      }
+    );
+    expect(result).toEqual({
+      ...existingFood,
+      provider_verified: true,
+      provider_type: 'yazio',
+    });
   });
   it('should create a new food when barcode does not exist for user', async () => {
     const newFood = makeExistingFood({ id: 'food-new-789' });
@@ -141,6 +206,159 @@ describe('foodCoreService.createFood', () => {
     await expect(
       foodCoreService.createFood(TEST_USER_ID, makeFoodData())
     ).rejects.toThrow('Database error');
+  });
+});
+
+describe('foodCoreService.searchFoods YAZIO verification refresh', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // @ts-expect-error mocked in test
+    preferenceService.getUserPreferences.mockResolvedValue({
+      item_display_limit: 10,
+      food_display_limit: 10,
+    });
+    // @ts-expect-error mocked in test
+    externalProviderService.getActiveProviderDetailsByType.mockResolvedValue({
+      app_id: 'packed-user',
+      app_key: 'packed-password',
+      base_url: 'https://example.test',
+      is_active: true,
+    });
+  });
+
+  it('refreshes verified YAZIO status for recent and top local foods', async () => {
+    const recentFood = makeExistingFood({
+      id: 'recent-yazio',
+      provider_type: 'yazio',
+      provider_external_id: 'yazio-recent',
+      provider_verified: false,
+    });
+    const topFood = makeExistingFood({
+      id: 'top-yazio',
+      provider_type: 'yazio',
+      provider_external_id: 'yazio-top',
+      provider_verified: false,
+    });
+    // @ts-expect-error mocked in test
+    foodRepository.getRecentFoods.mockResolvedValue([recentFood]);
+    // @ts-expect-error mocked in test
+    foodRepository.getTopFoods.mockResolvedValue([topFood]);
+    vi.mocked(getYazioFoodDetails).mockResolvedValue({
+      provider_verified: true,
+    } as any);
+
+    const result = await foodCoreService.searchFoods(
+      TEST_USER_ID,
+      undefined,
+      TEST_USER_ID,
+      false,
+      false,
+      false,
+      10
+    );
+
+    expect(getYazioFoodDetails).toHaveBeenCalledWith(
+      'yazio-recent',
+      expect.objectContaining({ username: 'packed-user' })
+    );
+    expect(getYazioFoodDetails).toHaveBeenCalledWith(
+      'yazio-top',
+      expect.objectContaining({ username: 'packed-user' })
+    );
+    expect(foodRepository.updateFood).toHaveBeenCalledWith(
+      'recent-yazio',
+      TEST_USER_ID,
+      {
+        provider_verified: true,
+        provider_type: 'yazio',
+        provider_external_id: 'yazio-recent',
+      }
+    );
+    expect(foodRepository.updateFood).toHaveBeenCalledWith(
+      'top-yazio',
+      TEST_USER_ID,
+      {
+        provider_verified: true,
+        provider_type: 'yazio',
+        provider_external_id: 'yazio-top',
+      }
+    );
+    expect(result.recentFoods[0].provider_verified).toBe(true);
+    expect(result.topFoods[0].provider_verified).toBe(true);
+  });
+
+  it('leaves existing YAZIO foods unverified when YAZIO details are not verified', async () => {
+    const localFood = makeExistingFood({
+      id: 'local-yazio',
+      provider_type: 'yazio',
+      provider_external_id: 'yazio-local',
+      provider_verified: false,
+    });
+    // @ts-expect-error mocked in test
+    foodRepository.searchFoods.mockResolvedValue([localFood]);
+    vi.mocked(getYazioFoodDetails).mockResolvedValue({
+      provider_verified: false,
+    } as any);
+
+    const result = await foodCoreService.searchFoods(
+      TEST_USER_ID,
+      'local',
+      TEST_USER_ID,
+      false,
+      true,
+      false,
+      10
+    );
+
+    expect(foodRepository.updateFood).not.toHaveBeenCalled();
+    expect(result.searchResults[0].provider_verified).toBe(false);
+  });
+
+  it('backfills missing YAZIO metadata and verification from barcode lookup', async () => {
+    const localFood = makeExistingFood({
+      id: 'barcode-local',
+      barcode: '4008400401621',
+      provider_type: null,
+      provider_external_id: null,
+      provider_verified: false,
+    });
+    // @ts-expect-error mocked in test
+    foodRepository.getRecentFoods.mockResolvedValue([localFood]);
+    // @ts-expect-error mocked in test
+    foodRepository.getTopFoods.mockResolvedValue([]);
+    vi.mocked(searchYazioByBarcode).mockResolvedValue({
+      provider_external_id: 'yazio-barcode-id',
+      provider_verified: true,
+    } as any);
+
+    const result = await foodCoreService.searchFoods(
+      TEST_USER_ID,
+      undefined,
+      TEST_USER_ID,
+      false,
+      false,
+      false,
+      10
+    );
+
+    expect(searchYazioByBarcode).toHaveBeenCalledWith(
+      '4008400401621',
+      expect.objectContaining({ username: 'packed-user' })
+    );
+    expect(foodRepository.updateFood).toHaveBeenCalledWith(
+      'barcode-local',
+      TEST_USER_ID,
+      {
+        provider_verified: true,
+        provider_type: 'yazio',
+        provider_external_id: 'yazio-barcode-id',
+      }
+    );
+    expect(result.recentFoods[0]).toMatchObject({
+      provider_verified: true,
+      provider_type: 'yazio',
+      provider_external_id: 'yazio-barcode-id',
+    });
   });
 });
 

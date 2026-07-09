@@ -63,7 +63,8 @@ interface YazioProductSearchResult {
   product_id?: string;
   id?: string;
   name?: string;
-  is_verified?: boolean;
+  is_verified?: boolean | string | number;
+  verified?: boolean | string | number;
   producer?: string | null;
   serving?: string;
   serving_quantity?: number;
@@ -234,6 +235,26 @@ function numberValue(value: unknown, fallback = 0): number {
 function round(value: unknown, precision = 1): number {
   const factor = 10 ** precision;
   return Math.round(numberValue(value) * factor) / factor;
+}
+
+function isYazioProductVerified(product: YazioProductSearchResult): boolean {
+  const raw = product.is_verified ?? product.verified;
+  return raw === true || raw === 'true' || raw === 1 || raw === '1';
+}
+
+function mergeYazioSearchCandidateVerification(
+  detailed: YazioProduct,
+  candidate: YazioProductSearchResult
+): YazioProduct {
+  if (detailed.is_verified !== undefined || detailed.verified !== undefined) {
+    return detailed;
+  }
+
+  return {
+    ...detailed,
+    is_verified: candidate.is_verified,
+    verified: candidate.verified,
+  };
 }
 
 function normalizeServingUnit(unit: unknown): string {
@@ -559,7 +580,7 @@ function mapYazioProduct(
     barcode: barcode || undefined,
     provider_external_id: externalId,
     provider_type: 'yazio',
-    provider_verified: product.is_verified === true,
+    provider_verified: isYazioProductVerified(product),
     is_custom: false,
     default_variant: defaultVariant,
     variants,
@@ -612,7 +633,10 @@ async function searchYazioFoods(query: string, options: YazioSearchOptions) {
       try {
         const detailed = await getRawYazioFoodDetails(productId, options);
         return detailed
-          ? mapYazioProduct(detailed, { productId })
+          ? mapYazioProduct(
+              mergeYazioSearchCandidateVerification(detailed, product),
+              { productId }
+            )
           : mapYazioProduct(product);
       } catch (error) {
         log(
@@ -719,7 +743,10 @@ async function searchYazioByBarcode(
       continue;
     }
 
-    const food = mapYazioProduct(detailedProduct, { productId });
+    const food = mapYazioProduct(
+      mergeYazioSearchCandidateVerification(detailedProduct, candidate),
+      { productId }
+    );
     if (food) {
       return {
         ...food,

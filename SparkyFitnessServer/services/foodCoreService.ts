@@ -18,7 +18,110 @@ import {
   searchFatSecretByBarcode,
   mapFatSecretFood,
 } from '../integrations/fatsecret/fatsecretService.js';
-import { searchYazioByBarcode } from '../integrations/yazio/yazioService.js';
+import {
+  getYazioFoodDetails,
+  searchYazioByBarcode,
+} from '../integrations/yazio/yazioService.js';
+
+function shouldRefreshYazioVerification(food: any) {
+  return (
+    food?.provider_verified !== true &&
+    ((food?.provider_type === 'yazio' && food?.provider_external_id) ||
+      food?.barcode)
+  );
+}
+
+async function refreshYazioVerificationForFoods(
+  authenticatedUserId: string,
+  foods: any[]
+) {
+  const candidates = foods.filter(shouldRefreshYazioVerification);
+  if (candidates.length === 0) {
+    return foods;
+  }
+
+  let provider: any = null;
+  try {
+    provider = await externalProviderService.getActiveProviderDetailsByType(
+      authenticatedUserId,
+      'yazio'
+    );
+  } catch (error) {
+    log(
+      'debug',
+      'Unable to resolve YAZIO provider for verification refresh:',
+      error
+    );
+  }
+
+  if (!provider?.app_id || !provider?.app_key) {
+    return foods;
+  }
+
+  const refreshedById = new Map<string, any>();
+  await Promise.all(
+    candidates.map(async (food) => {
+      try {
+        const credentials = {
+          username: provider.app_id,
+          password: provider.app_key,
+          baseUrl: provider.base_url,
+        };
+        const yazioFood =
+          food.provider_type === 'yazio' && food.provider_external_id
+            ? await getYazioFoodDetails(food.provider_external_id, credentials)
+            : await searchYazioByBarcode(food.barcode, credentials);
+        if (yazioFood?.provider_verified === true) {
+          const metadata = {
+            provider_verified: true,
+            provider_type: 'yazio',
+            provider_external_id:
+              yazioFood.provider_external_id ?? food.provider_external_id,
+          };
+          await foodRepository.updateFood(food.id, authenticatedUserId, {
+            ...metadata,
+          });
+          refreshedById.set(food.id, { ...food, ...metadata });
+        }
+      } catch (error) {
+        log(
+          'debug',
+          `Unable to refresh YAZIO verification for food ${food.id}:`,
+          error
+        );
+      }
+    })
+  );
+
+  if (refreshedById.size === 0) {
+    return foods;
+  }
+
+  return foods.map((food) => refreshedById.get(food.id) ?? food);
+}
+
+async function refreshYazioVerificationForSearchResult(
+  authenticatedUserId: string,
+  result: any
+) {
+  if (Array.isArray(result)) {
+    return refreshYazioVerificationForFoods(authenticatedUserId, result);
+  }
+
+  if (result?.recentFoods) {
+    const [recentFoods, topFoods] = await Promise.all([
+      refreshYazioVerificationForFoods(authenticatedUserId, result.recentFoods),
+      refreshYazioVerificationForFoods(
+        authenticatedUserId,
+        result.topFoods ?? []
+      ),
+    ]);
+    return { ...result, recentFoods, topFoods };
+  }
+
+  return result;
+}
+
 async function searchFoods(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   authenticatedUserId: any,
@@ -56,7 +159,10 @@ async function searchFoods(
         limit,
         mealType
       );
-      return { recentFoods, topFoods };
+      return refreshYazioVerificationForSearchResult(authenticatedUserId, {
+        recentFoods,
+        topFoods,
+      });
     } else {
       // Otherwise, perform a regular search
       const userPreferences = await preferenceService.getUserPreferences(
@@ -72,7 +178,11 @@ async function searchFoods(
         checkCustom,
         limit // Pass the limit to the repository search function
       );
-      return { searchResults: foods };
+      const searchResults = await refreshYazioVerificationForFoods(
+        authenticatedUserId,
+        foods
+      );
+      return { searchResults };
     }
   } catch (error) {
     log(
@@ -84,6 +194,47 @@ async function searchFoods(
   }
 }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function refreshExistingExternalFoodMetadata(
+  authenticatedUserId: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  existingFood: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  foodData: any
+) {
+  const metadata: Record<string, unknown> = {};
+  if (
+    foodData.provider_verified === true &&
+    existingFood.provider_verified !== true
+  ) {
+    metadata.provider_verified = true;
+  }
+  if (
+    foodData.provider_type &&
+    existingFood.provider_type !== foodData.provider_type
+  ) {
+    metadata.provider_type = foodData.provider_type;
+  }
+  if (
+    foodData.provider_external_id &&
+    existingFood.provider_external_id !== foodData.provider_external_id
+  ) {
+    metadata.provider_external_id = foodData.provider_external_id;
+  }
+
+  if (Object.keys(metadata).length === 0) {
+    return existingFood;
+  }
+
+  await foodRepository.updateFood(
+    existingFood.id,
+    authenticatedUserId,
+    metadata
+  );
+
+  return { ...existingFood, ...metadata };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function createFood(authenticatedUserId: any, foodData: any) {
   try {
     if (foodData.barcode) {
@@ -92,7 +243,27 @@ async function createFood(authenticatedUserId: any, foodData: any) {
         authenticatedUserId
       );
       if (existingFood) {
-        return existingFood;
+        return refreshExistingExternalFoodMetadata(
+          authenticatedUserId,
+          existingFood,
+          foodData
+        );
+      }
+    }
+    // Dedup by provider (e.g. Yazio product ID) — catches duplicate saves of
+    // the same external food even when no barcode is present on the package.
+    if (foodData.provider_external_id && foodData.provider_type) {
+      const existingFood = await foodRepository.findFoodByProviderExternalId(
+        authenticatedUserId,
+        foodData.provider_external_id,
+        foodData.provider_type
+      );
+      if (existingFood) {
+        return refreshExistingExternalFoodMetadata(
+          authenticatedUserId,
+          existingFood,
+          foodData
+        );
       }
     }
     const newFood = await foodRepository.createFood({

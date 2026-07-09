@@ -486,6 +486,22 @@ async function getActiveOpenFoodFactsProviderId(userId: any) {
     return null;
   }
 }
+async function getActiveProviderDetailsByType(
+  userId: string,
+  providerType: string
+) {
+  const providers = await externalProviderRepository.getActiveProvidersByTypes(
+    userId,
+    [providerType]
+  );
+  const providerId = providers[0]?.id;
+  if (!providerId) {
+    return null;
+  }
+
+  const details = await getExternalDataProviderDetails(userId, providerId);
+  return details && details.is_active ? details : null;
+}
 async function getExternalProviderTypes() {
   return externalProviderRepository.getExternalProviderTypes();
 }
@@ -497,6 +513,7 @@ export { updateExternalDataProvider };
 export { getExternalDataProviderDetails };
 export { deleteExternalDataProvider };
 export { getExternalProviderTypes };
+export { getActiveProviderDetailsByType };
 export default {
   getExternalDataProviders,
   getExternalDataProvidersForUser,
@@ -505,5 +522,6 @@ export default {
   getExternalDataProviderDetails,
   deleteExternalDataProvider,
   getActiveOpenFoodFactsProviderId,
+  getActiveProviderDetailsByType,
   getExternalProviderTypes,
 };

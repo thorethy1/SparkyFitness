@@ -219,6 +219,8 @@ const FoodScanScreen: React.FC<FoodScanScreenProps> = ({ navigation, route }) =>
             serving_size: v.serving_size,
             serving_unit: v.serving_unit,
             serving_description: v.serving_description ?? `${v.serving_size} ${v.serving_unit}`,
+            serving_weight: v.serving_weight,
+            serving_weight_unit: v.serving_weight_unit,
             calories: v.calories,
             protein: v.protein,
             carbs: v.carbs,

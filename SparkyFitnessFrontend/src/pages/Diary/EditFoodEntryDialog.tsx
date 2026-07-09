@@ -43,6 +43,7 @@ import {
   type AiConfidence,
   type ConfidenceTone,
 } from '@workspace/shared';
+import { formatServingLabel } from '@/utils/foodServing';
 
 const AI_PICKER_ICON_TONE_CLASSES: Record<ConfidenceTone, string> = {
   success: 'text-emerald-600 dark:text-emerald-400',
@@ -334,7 +335,7 @@ const EditFoodEntryDialog = ({
                             variant.id && (
                               <SelectItem key={variant.id} value={variant.id}>
                                 <span className="flex items-center gap-1.5">
-                                  {variant.serving_unit}
+                                  {formatServingLabel(variant)}
                                   {variant.source === 'ai_estimate' &&
                                     variant.ai_confidence && (
                                       <Sparkles

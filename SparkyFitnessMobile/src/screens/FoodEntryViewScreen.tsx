@@ -47,6 +47,7 @@ import {
   unitVariantToDisplayValues,
 } from '../utils/foodDetails';
 import { DECIMAL_INPUT_REGEX, parseDecimalInput } from '../utils/numericInput';
+import VerifiedBadge from '../components/VerifiedBadge';
 
 type FoodEntryViewScreenProps = RootStackScreenProps<'FoodEntryView'>;
 
@@ -188,12 +189,14 @@ const FoodEntryViewScreen: React.FC<FoodEntryViewScreenProps> = ({
   const variantPickerOptions = useMemo(() => {
     const baseOptions = (variants ?? []).map((variant) => ({
       id: variant.id,
-      label: formatVariantLabel({
+        label: formatVariantLabel({
+          servingSize: variant.serving_size,
+          servingUnit: variant.serving_unit,
+          servingDescription: variant.serving_description ?? undefined,
+          calories: variant.calories,
+        }),
+        servingDescription: variant.serving_description ?? undefined,
         servingSize: variant.serving_size,
-        servingUnit: variant.serving_unit,
-        calories: variant.calories,
-      }),
-      servingSize: variant.serving_size,
       servingUnit: variant.serving_unit,
       calories: variant.calories,
       protein: variant.protein,
@@ -752,9 +755,12 @@ const FoodEntryViewScreen: React.FC<FoodEntryViewScreenProps> = ({
         }}
       >
         <Animated.View layout={LinearTransition.duration(300)}>
-          <Text className="text-text-primary text-3xl font-bold">
-            {(isEditing && adjustedValues?.name) || entry.food_name || 'Unknown food'}
-          </Text>
+          <View className="flex-row items-start gap-2">
+            <Text className="text-text-primary text-3xl font-bold flex-shrink">
+              {(isEditing && adjustedValues?.name) || entry.food_name || 'Unknown food'}
+            </Text>
+            {entry.provider_verified ? <VerifiedBadge size="md" style={{ marginTop: 7 }} /> : null}
+          </View>
           {((isEditing && adjustedValues?.brand) || entry.brand_name) && (
             <Text className="text-text-muted mt-1 font-semibold">
               {(isEditing && adjustedValues?.brand) || entry.brand_name}

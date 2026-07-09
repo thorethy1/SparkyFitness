@@ -69,12 +69,14 @@ import {
   type FoodDisplayValues,
 } from '../utils/foodDetails';
 import { buildMealIngredientDraft } from '../utils/mealBuilderDraft';
+import { persistExternalVariants } from '../utils/persistExternalVariants';
 import { DECIMAL_INPUT_REGEX, parseDecimalInput } from '../utils/numericInput';
 
 type FoodEntryAddScreenProps = RootStackScreenProps<'FoodEntryAdd'>;
 const EXTERNAL_DRAFT_VARIANT_ID = '__draft-external-unit__';
 // Sentinel written by FoodForm for AI-converted draft units; never a real DB ID.
 const FORM_DRAFT_UNIT_ID = '__food-form-draft-unit__';
+
 const NUTRITION_FIELDS = [
   'fiber',
   'saturatedFat',
@@ -657,28 +659,43 @@ const FoodEntryAddScreen: React.FC<FoodEntryAddScreenProps> = ({
   ]) as [string, string, string];
 
   const buildSaveFoodPayload = useCallback(
-    () => ({
-      name: adjustedValues?.name || activeItem.name,
-      brand: adjustedValues?.brand ?? activeItem.brand ?? null,
-      serving_size: saveFoodSourceValues.servingSize,
-      serving_unit: saveFoodSourceValues.servingUnit,
-      calories: saveFoodSourceValues.calories,
-      protein: saveFoodSourceValues.protein,
-      carbs: saveFoodSourceValues.carbs,
-      fat: saveFoodSourceValues.fat,
-      dietary_fiber: saveFoodSourceValues.fiber,
-      saturated_fat: saveFoodSourceValues.saturatedFat,
-      sodium: saveFoodSourceValues.sodium,
-      sugars: saveFoodSourceValues.sugars,
-      trans_fat: saveFoodSourceValues.transFat,
-      potassium: saveFoodSourceValues.potassium,
-      calcium: saveFoodSourceValues.calcium,
-      iron: saveFoodSourceValues.iron,
-      cholesterol: saveFoodSourceValues.cholesterol,
-      vitamin_a: saveFoodSourceValues.vitaminA,
-      vitamin_c: saveFoodSourceValues.vitaminC,
-    }),
-    [activeItem.brand, activeItem.name, adjustedValues, saveFoodSourceValues],
+    () => {
+      const sourceVariant = activeItem.externalVariants?.find(
+        (variant) => variant.serving_size === saveFoodSourceValues.servingSize
+          && variant.serving_unit === saveFoodSourceValues.servingUnit,
+      );
+
+      return {
+        name: adjustedValues?.name || activeItem.name,
+        brand: adjustedValues?.brand ?? activeItem.brand ?? null,
+        barcode: activeItem.barcode ?? null,
+        provider_type: activeItem.provider_type ?? null,
+        provider_external_id: activeItem.provider_external_id ?? null,
+        provider_verified: activeItem.provider_verified === true,
+        is_custom: activeItem.is_custom ?? true,
+        serving_size: saveFoodSourceValues.servingSize,
+        serving_unit: saveFoodSourceValues.servingUnit,
+        serving_description: sourceVariant?.serving_description ?? activeItem.servingDescription ?? `${saveFoodSourceValues.servingSize} ${saveFoodSourceValues.servingUnit}`,
+        serving_weight: sourceVariant?.serving_weight ?? null,
+        serving_weight_unit: sourceVariant?.serving_weight_unit ?? null,
+        calories: saveFoodSourceValues.calories,
+        protein: saveFoodSourceValues.protein,
+        carbs: saveFoodSourceValues.carbs,
+        fat: saveFoodSourceValues.fat,
+        dietary_fiber: saveFoodSourceValues.fiber,
+        saturated_fat: saveFoodSourceValues.saturatedFat,
+        sodium: saveFoodSourceValues.sodium,
+        sugars: saveFoodSourceValues.sugars,
+        trans_fat: saveFoodSourceValues.transFat,
+        potassium: saveFoodSourceValues.potassium,
+        calcium: saveFoodSourceValues.calcium,
+        iron: saveFoodSourceValues.iron,
+        cholesterol: saveFoodSourceValues.cholesterol,
+        vitamin_a: saveFoodSourceValues.vitaminA,
+        vitamin_c: saveFoodSourceValues.vitaminC,
+      };
+    },
+    [activeItem.barcode, activeItem.brand, activeItem.externalVariants, activeItem.is_custom, activeItem.name, activeItem.provider_external_id, activeItem.provider_type, activeItem.provider_verified, activeItem.servingDescription, adjustedValues, saveFoodSourceValues],
   );
 
   const {
@@ -884,6 +901,8 @@ const FoodEntryAddScreen: React.FC<FoodEntryAddScreenProps> = ({
               throw new Error('Server did not return a created variant ID');
             }
 
+            await persistExternalVariants(savedFood, activeItem.externalVariants);
+
             finishMealBuilderSelection(
               buildMealIngredientDraft({
                 foodId: savedFood.id,
@@ -901,6 +920,9 @@ const FoodEntryAddScreen: React.FC<FoodEntryAddScreenProps> = ({
           if (!savedFood.default_variant?.id) {
             throw new Error('Server did not return a variant ID for the saved food');
           }
+
+          await persistExternalVariants(savedFood, activeItem.externalVariants);
+
           finishMealBuilderSelection(
             buildMealIngredientDraft({
               foodId: savedFood.id,
@@ -953,6 +975,9 @@ const FoodEntryAddScreen: React.FC<FoodEntryAddScreenProps> = ({
           });
         }
       }
+
+      // Persist all external (Yazio) variants after initial save
+      await persistExternalVariants(savedFood, activeItem.externalVariants);
 
       setSavedFoodOverride(savedFoodInfo);
       setSelectedVariantOverride(nextVariantOverride);
@@ -1334,6 +1359,9 @@ const FoodEntryAddScreen: React.FC<FoodEntryAddScreenProps> = ({
                 saveThenCreateVariantPayload: buildCreateFoodVariantInput(
                   pendingVariantToPersist,
                 ),
+                ...(activeItem.externalVariants
+                  ? { externalVariants: activeItem.externalVariants }
+                  : {}),
                 createEntryPayload: buildFoodEntryPayload(),
               }).catch(() => undefined);
               return;
@@ -1343,6 +1371,9 @@ const FoodEntryAddScreen: React.FC<FoodEntryAddScreenProps> = ({
               activeItem.source === 'external' ? buildSaveFoodPayload() : undefined;
             addEntry({
               saveFoodPayload,
+              ...(activeItem.source === 'external'
+                ? { externalVariants: activeItem.externalVariants }
+                : {}),
               createEntryPayload: buildFoodEntryPayload(),
             });
           }}
