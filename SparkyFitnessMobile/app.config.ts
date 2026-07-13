@@ -143,7 +143,6 @@ export default ({ config }: ConfigContext): Partial<ExpoConfig> => {
     plugins: [
       ...(config.plugins ?? []),
       './plugins/withGlanceAndroidSupport',
-      './plugins/withCalorieWidget',
       './plugins/withEnrichedMarkdownNoMath',
       ...(!isDev ? prodPlugins : []),
     ],
@@ -152,7 +151,7 @@ export default ({ config }: ConfigContext): Partial<ExpoConfig> => {
       APP_VARIANT: environment,
       iosAppGroup: getIosAppGroup(),
       eas: {
-        projectId: "498a86c5-344f-4d2c-9033-dfd720e4a383",
+        projectId: "4551af79-1f16-4c11-87d9-629093b5d472",
       },
     },
   };
