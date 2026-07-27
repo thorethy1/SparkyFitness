@@ -7,7 +7,7 @@ const APP_NAME = 'SparkyFitness';
 const APP_SLUG = 'sparkyfitnessmobile';
 const ANDROID_PROD_BUNDLE_IDENTIFIER = 'com.SparkyApps.SparkyFitnessMobile';
 const IOS_PROD_BUNDLE_IDENTIFIER = 'com.SparkyApps.SparkyFitnessMobile';
-const DEV_APPLE_TEAM_ID = process.env.EXPO_DEV_APPLE_TEAM_ID || '';
+const DEV_APPLE_TEAM_ID = process.env.EXPO_DEV_APPLE_TEAM_ID || 'GYA6B57RGG';
 const PROD_APPLE_TEAM_ID = process.env.EXPO_PROD_APPLE_TEAM_ID || '';
 
 const DEV_PACKAGE = DEV_BUNDLE_IDENTIFIER;
@@ -151,33 +151,15 @@ export default ({ config }: ConfigContext): Partial<ExpoConfig> => {
       ...(config.plugins ?? []),
       'expo-image',
       './plugins/withGlanceAndroidSupport',
-      './plugins/withCalorieWidget',
       './plugins/withExactAlarmModule',
       './plugins/withEnrichedMarkdownNoMath',
-      [
-        'expo-widgets',
-        {
-          groupIdentifier: getIosAppGroup(),
-          bundleIdentifier:
-            process.env.WIDGET_BUNDLE_IDENTIFIER ||
-            (isDev
-              ? `${DEV_BUNDLE_IDENTIFIER}.ExpoWidgetsTarget`
-              : 'com.SparkyApps.SparkyFitnessMobile.ExpoWidgetsTarget'),
-          // Live Activities register at runtime via createLiveActivity and must
-          // NOT be listed here — widgets[] is only for home/Lock Screen widgets
-          // (an entry without supportedFamilies breaks the generated target).
-          widgets: [],
-        },
-      ],
       ...(!isDev ? prodPlugins : []),
     ],
     extra: {
       ...config.extra,
       APP_VARIANT: environment,
       iosAppGroup: getIosAppGroup(),
-      eas: {
-        projectId: "498a86c5-344f-4d2c-9033-dfd720e4a383",
-      },
+
     },
   };
 };
