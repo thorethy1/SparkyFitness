@@ -11,9 +11,8 @@ vi.mock('../config/logging', () => ({
 
 describe('buildChatProviderOptions', () => {
   // Provider-gating: only the canonical 'openai' service type gets the
-  // openai-namespaced prompt_cache_* options. The OpenAI-compatible types share
-  // the `openai` namespace via createOpenAI(), so leaking these to them could
-  // send prompt_cache_key to backends that reject it.
+  // openai-namespaced prompt_cache_* options. OpenAI-compatible services share
+  // the namespace but receive only adapter-level compatibility options.
   it('sets a per-user promptCacheKey for openai without retention on the default model', () => {
     expect(buildChatProviderOptions('openai', 'user-1', 'gpt-4o-mini')).toEqual(
       {
@@ -45,7 +44,15 @@ describe('buildChatProviderOptions', () => {
     });
   });
 
-  it('returns undefined for every non-openai service type', () => {
+  it('keeps system instructions as the system role for OpenAI-compatible backends', () => {
+    expect(
+      buildChatProviderOptions('openai_compatible', 'user-1', 'gpt-5.6-sol')
+    ).toEqual({
+      openai: { systemMessageMode: 'system' },
+    });
+  });
+
+  it('returns undefined for unrelated non-openai service types', () => {
     for (const serviceType of [
       'anthropic',
       'google',
@@ -53,7 +60,6 @@ describe('buildChatProviderOptions', () => {
       'mistral',
       'openrouter',
       'ollama',
-      'openai_compatible',
       'custom',
     ]) {
       expect(
